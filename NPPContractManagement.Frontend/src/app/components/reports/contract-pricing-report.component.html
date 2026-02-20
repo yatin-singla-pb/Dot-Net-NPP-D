@@ -1,0 +1,307 @@
+<div class="container mt-4">
+  <h2>Contract Pricing Report</h2>
+  <p class="text-muted">View detailed contract pricing information with revision history</p>
+
+  <!-- Filters Card -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">Filters</h5>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <!-- Contract Number -->
+        <div class="col-md-3">
+          <label for="contractNumber" class="form-label">Contract Number</label>
+          <input 
+            type="text" 
+            class="form-control" 
+            id="contractNumber" 
+            [(ngModel)]="contractNumber"
+            >
+        </div>
+
+        <!-- Contract Name -->
+        <div class="col-md-3">
+          <label for="contractName" class="form-label">Contract Name</label>
+          <input 
+            type="text" 
+            class="form-control" 
+            id="contractName" 
+            [(ngModel)]="contractName"
+            >
+        </div>
+
+        <!-- Manufacturer -->
+        <div class="col-md-3">
+          <label for="manufacturer" class="form-label">Manufacturer</label>
+          <select 
+            class="form-select" 
+            id="manufacturer" 
+            [(ngModel)]="selectedManufacturerId">
+            <option [ngValue]="null">All Manufacturers</option>
+            @for (manufacturer of manufacturers; track manufacturer.id) {
+              <option [ngValue]="manufacturer.id">{{ manufacturer.name }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Product -->
+        <div class="col-md-3">
+          <label for="product" class="form-label">Product</label>
+          <select 
+            class="form-select" 
+            id="product" 
+            [(ngModel)]="selectedProductId">
+            <option [ngValue]="null">All Products</option>
+            @for (product of products; track product.id) {
+              <option [ngValue]="product.id">{{ product.name }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Op-Co -->
+        <div class="col-md-3">
+          <label for="opCo" class="form-label">Op-Co</label>
+          <select 
+            class="form-select" 
+            id="opCo" 
+            [(ngModel)]="selectedOpCoId">
+            <option [ngValue]="null">All Op-Cos</option>
+            @for (opCo of opCos; track opCo.id) {
+              <option [ngValue]="opCo.id">{{ opCo.name }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Industry -->
+        <div class="col-md-3">
+          <label for="industry" class="form-label">Industry</label>
+          <select 
+            class="form-select" 
+            id="industry" 
+            [(ngModel)]="selectedIndustryId">
+            <option [ngValue]="null">All Industries</option>
+            @for (industry of industries; track industry.id) {
+              <option [ngValue]="industry.id">{{ industry.name }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Distributor -->
+        <div class="col-md-3">
+          <label for="distributor" class="form-label">Distributor</label>
+          <select 
+            class="form-select" 
+            id="distributor" 
+            [(ngModel)]="selectedDistributorId">
+            <option [ngValue]="null">All Distributors</option>
+            @for (distributor of distributors; track distributor.id) {
+              <option [ngValue]="distributor.id">{{ distributor.name }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Start Date From -->
+        <div class="col-md-3">
+          <label for="startDateFrom" class="form-label">Start Date From</label>
+          <input
+            type="date"
+            class="form-control"
+            id="startDateFrom"
+            [(ngModel)]="startDateFrom"
+            [class.has-value]="startDateFrom">
+        </div>
+
+        <!-- Start Date To -->
+        <div class="col-md-3">
+          <label for="startDateTo" class="form-label">Start Date To</label>
+          <input
+            type="date"
+            class="form-control"
+            id="startDateTo"
+            [(ngModel)]="startDateTo"
+            [class.has-value]="startDateTo">
+        </div>
+
+        <!-- End Date From -->
+        <div class="col-md-3">
+          <label for="endDateFrom" class="form-label">End Date From</label>
+          <input
+            type="date"
+            class="form-control"
+            id="endDateFrom"
+            [(ngModel)]="endDateFrom"
+            [class.has-value]="endDateFrom">
+        </div>
+
+        <!-- End Date To -->
+        <div class="col-md-3">
+          <label for="endDateTo" class="form-label">End Date To</label>
+          <input
+            type="date"
+            class="form-control"
+            id="endDateTo"
+            [(ngModel)]="endDateTo"
+            [class.has-value]="endDateTo">
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="mt-3 d-flex gap-2">
+        <button
+          type="button"
+          class="btn btn-denim"
+          (click)="generateReport()"
+          [disabled]="loading">
+          <i class="fas fa-search me-2"></i>
+          {{ loading ? 'Generating...' : 'Generate Report' }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-outline-secondary"
+          (click)="downloadExcel()"
+          [disabled]="!reportData || downloadingExcel">
+          <i class="fas fa-download me-2"></i>
+          {{ downloadingExcel ? 'Downloading...' : 'Download Excel' }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-outline-secondary"
+          (click)="clearFilters()">
+          <i class="fas fa-times me-2"></i>
+          Clear Filters
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Message -->
+  @if (error) {
+    <div class="alert alert-danger">
+      {{ error }}
+    </div>
+  }
+
+  <!-- Loading Spinner -->
+  @if (loading) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="mt-2">Generating report...</p>
+    </div>
+  }
+
+  <!-- Report Results -->
+  @if (reportData && !loading) {
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Report Results</h5>
+        <span class="badge bg-primary">{{ reportData.totalRows }} total records</span>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover table-sm mb-0">
+            <thead class="table-light sticky-top">
+              <tr>
+                <th>Contract #</th>
+                <th>Manufacturer</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Op-Cos</th>
+                <th>Industry</th>
+                <th>Contract Ver.</th>
+                <th>Effective Date</th>
+                <th>Product Code</th>
+                <th>Product Name</th>
+                <th>Pricing Ver.</th>
+                <th>Allowance</th>
+                <th>Comm. Del.</th>
+                <th>Comm. FOB</th>
+                <th>Commod. Del.</th>
+                <th>Commod. FOB</th>
+                <th>UOM</th>
+                <th>Est. Vol.</th>
+                <th>Actual Vol.</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @if (reportData.rows.length === 0) {
+                <tr>
+                  <td colspan="20" class="text-center text-muted py-4">
+                    No records found matching the selected filters.
+                  </td>
+                </tr>
+              } @else {
+                @for (row of reportData.rows; track row.contractId + '-' + row.productCode + '-' + row.pricingVersionNumber) {
+                  <tr>
+                    <td>
+                      <a [routerLink]="['/admin/contracts', row.contractId]" class="text-decoration-none">
+                        {{ row.contractNumber }}
+                      </a>
+                    </td>
+                    <td>{{ row.manufacturer }}</td>
+                    <td>{{ row.startDate | date:'yyyy-MM-dd' }}</td>
+                    <td>{{ row.endDate | date:'yyyy-MM-dd' }}</td>
+                    <td class="text-truncate" style="max-width: 150px;" [title]="row.opCos">{{ row.opCos }}</td>
+                    <td>{{ row.industry || 'N/A' }}</td>
+                    <td class="text-center">{{ row.contractVersionNumber }}</td>
+                    <td>{{ row.effectiveDate | date:'yyyy-MM-dd' }}</td>
+                    <td>{{ row.productCode }}</td>
+                    <td class="text-truncate" style="max-width: 200px;" [title]="row.productName">{{ row.productName }}</td>
+                    <td class="text-center">{{ row.pricingVersionNumber }}</td>
+                    <td class="text-end">{{ row.allowance | currency }}</td>
+                    <td class="text-end">{{ row.commercialDelivered | currency }}</td>
+                    <td class="text-end">{{ row.commercialFOB | currency }}</td>
+                    <td class="text-end">{{ row.commodityDelivered | currency }}</td>
+                    <td class="text-end">{{ row.commodityFOB | currency }}</td>
+                    <td>{{ row.uom }}</td>
+                    <td class="text-end">{{ row.estimatedVolume | number:'1.0-2' }}</td>
+                    <td class="text-end">{{ row.actualVolume | number:'1.0-2' }}</td>
+                    <td>
+                      <a [routerLink]="['/admin/contracts', row.contractId]" class="btn btn-sm btn-outline-primary" title="View Contract">
+                        <i class="fas fa-eye"></i>
+                      </a>
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      @if (reportData.totalPages > 1) {
+        <div class="card-footer">
+          <nav aria-label="Report pagination">
+            <ul class="pagination justify-content-center mb-0">
+              <li class="page-item" [class.disabled]="currentPage === 1">
+                <a class="page-link" (click)="currentPage > 1 && onPageChange(currentPage - 1)" style="cursor: pointer;">Previous</a>
+              </li>
+              @for (page of [].constructor(Math.min(reportData.totalPages, 10)); track $index; let i = $index) {
+                <li class="page-item" [class.active]="currentPage === i + 1">
+                  <a class="page-link" (click)="onPageChange(i + 1)" style="cursor: pointer;">{{ i + 1 }}</a>
+                </li>
+              }
+              @if (reportData.totalPages > 10) {
+                <li class="page-item disabled">
+                  <span class="page-link">...</span>
+                </li>
+              }
+              <li class="page-item" [class.disabled]="currentPage === reportData.totalPages">
+                <a class="page-link" (click)="currentPage < reportData.totalPages && onPageChange(currentPage + 1)" style="cursor: pointer;">Next</a>
+              </li>
+            </ul>
+          </nav>
+          <div class="text-center mt-2 small text-muted">
+            Page {{ currentPage }} of {{ reportData.totalPages }} ({{ reportData.totalRows }} total records)
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+

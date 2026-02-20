@@ -1,0 +1,77 @@
+<header class="container fixed-top">
+
+    <div class="d-flex justify-content-between">
+
+        <div class="d-inline-flex">
+
+            <img src="assets/images/npp_logo_denim.jpg" />
+
+            <div class="d-inline-flex align-self-end ms-3">
+
+                <a routerLink="/dashboard" class="me-3">Dashboard</a>
+
+                @if (!isHeadlessUser()) {
+                <a routerLink="/admin/proposals" class="me-3">Proposals</a>
+                }
+
+                @if (isContractViewerUser() || isManufacturerUser()) {
+                <a routerLink="/admin/contracts" class="me-3">Contracts</a>
+                }
+
+                @if (isAdminUser()) {
+                <div class="dropdown me-3">
+                    <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown">Administration</a>
+                    <ul class="dropdown-menu">
+                        <li><a routerLink="/admin/contracts" class="dropdown-item">Contracts</a></li>
+                        <li><a routerLink="/admin/customer-accounts" class="dropdown-item">Customer Accounts</a></li>
+                        <li><a routerLink="/admin/distributor-product-codes" class="dropdown-item">Distributor Product Codes</a></li>
+                        <li><a routerLink="/admin/distributors" class="dropdown-item">Distributors</a></li>
+                        <li><a routerLink="/admin/industries" class="dropdown-item">Industries</a></li>
+                        <li><a routerLink="/admin/manufacturers" class="dropdown-item">Manufacturers</a></li>
+                        <li><a routerLink="/admin/member-accounts" class="dropdown-item">Member Accounts</a></li>
+                        <li><a routerLink="/admin/op-cos" class="dropdown-item">Op-Cos</a></li>
+                        <li><a routerLink="/admin/products" class="dropdown-item">Products</a></li>
+                        <li><a routerLink="/admin/users" class="dropdown-item">Users</a></li>
+                        <li><a routerLink="/admin/velocity" class="dropdown-item">Velocity Data</a></li>
+                    </ul>
+                </div>
+                }
+
+                @if (isAdminUser() || isContractViewerUser()) {
+                <div class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown">Reporting</a>
+                    <ul class="dropdown-menu">
+                        <li><a routerLink="/admin/reports/contract-over-term" class="dropdown-item">Contract Over Term</a></li>
+                        <li><a routerLink="/admin/reports/contract-pricing" class="dropdown-item">Contract Pricing</a></li>
+                        @if (isAdminUser()) {
+                        <li><a routerLink="/admin/velocity" class="dropdown-item">Velocity</a></li>
+                        <li><a routerLink="/admin/reports/velocity-exceptions" class="dropdown-item">Velocity Exceptions</a></li>
+                        <li><a routerLink="/admin/reports/velocity-usage" class="dropdown-item">Velocity Usage Report</a></li>
+                        }
+                    </ul>
+                </div>
+                }
+
+            </div>
+
+        </div>
+
+        <span class="align-self-end">
+            @if (isManufacturerUser() && manufacturerNameLabel) {
+              <span class="align-self-end me-3 text-muted small">Manufacturer: {{manufacturerNameLabel}}</span>
+            }
+
+
+            <div class="dropdown">
+                <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown">Welcome {{getUserDisplayName()}}</a>
+                <ul class="dropdown-menu">
+                    <li><a routerLink="/profile" class="dropdown-item" (click)="goToProfile($event)">My Account</a></li>
+                    <li><a href="#" class="dropdown-item" (click)="logout(); $event.preventDefault()">Log Out</a></li>
+                </ul>
+            </div>
+
+        </span>
+
+    </div>
+
+</header>

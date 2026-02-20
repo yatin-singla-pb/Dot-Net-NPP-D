@@ -1,0 +1,465 @@
+
+<main class="container">
+  <nav aria-label="breadcrumb" id="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item active">Dashboard</li>
+    </ol>
+  </nav>
+  @if (isManufacturerUser() && manufacturerNameLabel) {
+    <div class="text-muted small mb-3">Manufacturer: {{manufacturerNameLabel}}</div>
+  }
+
+
+  <div class="row g-4">
+    <div class="col-12">
+      <div class="card welcome-card">
+        <div class="card-body d-flex justify-content-between align-items-center">
+          <div>
+            <h4 class="mb-1">Welcome back</h4>
+            <div class="small opacity-75">Here is what’s new since your last visit</div>
+          </div>
+          <div class="d-flex gap-2">
+            <a routerLink="/admin/proposals/create" class="btn btn-denim">Create Proposal</a>
+            <button class="btn btn-outline-secondary" (click)="toggleEditMode()" title="Customize Dashboard">
+              <i class="bi" [class.bi-gear-fill]="editMode" [class.bi-gear]="!editMode"></i>
+              {{ editMode ? 'Done' : 'Customize' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Mode Controls -->
+    @if (editMode) {
+      <div class="col-12">
+        <div class="alert alert-info d-flex justify-content-between align-items-center">
+          <div>
+            <i class="bi bi-info-circle-fill me-2"></i>
+            <strong>Edit Mode:</strong> Drag and drop widgets to rearrange them. Click "Done" when finished.
+          </div>
+          <button class="btn btn-sm btn-outline-danger" (click)="resetWidgets()">
+            <i class="bi bi-arrow-counterclockwise me-1"></i>
+            Reset to Default
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- Draggable Widgets Container -->
+    <div class="col-12">
+      <div class="row g-4" cdkDropList (cdkDropListDropped)="onWidgetDrop($event)" [cdkDropListDisabled]="!editMode">
+
+        @for (widget of widgets; track widget.id) {
+          <div [class]="'col-lg-' + (widgets.length <= 2 ? 6 : 4)" cdkDrag [cdkDragDisabled]="!editMode">
+
+            <!-- Drag Handle (visible in edit mode) -->
+            @if (editMode) {
+              <div class="drag-handle text-center bg-light py-2 rounded-top" cdkDragHandle style="cursor: move;">
+                <i class="bi bi-grip-vertical"></i> Drag to reorder
+              </div>
+            }
+
+            <!-- Recent Proposals Widget -->
+            @if (widget.id === 'recent-proposals') {
+              <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                  <h5 class="mb-0">Recent Proposals</h5>
+                  <a routerLink="/admin/proposals" class="small">View all</a>
+                </div>
+                <div class="card-body">
+                  <div class="accordion" id="recentProposals">
+                    <div class="accordion-item" *ngFor="let p of recentProposals; let i = index">
+                      <h2 class="accordion-header" id="rp-h{{i}}">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" [attr.data-bs-target]="'#rp-c'+i" aria-expanded="false" [attr.aria-controls]="'rp-c'+i">
+                          <div class="d-flex flex-column w-100 me-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                              <span class="fw-semibold">{{ p.title }}</span>
+                              @if (p.proposalStatusName) {
+                                <span class="badge"
+                                      [ngClass]="{
+                                        'bg-info': p.proposalStatusName === 'Requested',
+                                        'bg-warning text-dark': p.proposalStatusName === 'Pending',
+                                        'bg-secondary': p.proposalStatusName === 'Saved',
+                                        'bg-primary': p.proposalStatusName === 'Submitted',
+                                        'bg-success': p.proposalStatusName === 'Completed'
+                                      }">
+                                  {{ p.proposalStatusName }}
+                                </span>
+                              }
+                            </div>
+                            <div class="small text-muted">
+                              <i class="bi bi-clock-history me-1"></i>
+                              <strong>Last Modified:</strong> {{ (p.modifiedDate || p.createdDate) ? ((p.modifiedDate || p.createdDate) | date:'short') : '-' }}
+                            </div>
+                          </div>
+                        </button>
+                      </h2>
+                      <div [id]="'rp-c'+i" class="accordion-collapse collapse" [attr.aria-labelledby]="'rp-h'+i" data-bs-parent="#recentProposals">
+                        <div class="accordion-body">
+                          <div class="d-flex justify-content-end">
+                            <a [routerLink]="['/admin/proposals', p.id]" class="btn btn-outline-primary btn-sm">
+                              <i class="bi bi-box-arrow-up-right me-1"></i>Open
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="text-muted" *ngIf="!recentProposals?.length">No proposals found.</div>
+                  </div>
+                </div>
+              </div>
+            }
+
+            <!-- Recent Contracts Widget -->
+            @if (widget.id === 'recent-contracts') {
+              <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                  <h5 class="mb-0">Recent Contracts</h5>
+                  <a routerLink="/admin/contracts" class="small">View all</a>
+                </div>
+                <div class="card-body">
+                  <div class="accordion" id="recentContracts">
+                    <div class="accordion-item" *ngFor="let c of recentContracts; let i = index">
+                      <h2 class="accordion-header" id="rc-h{{i}}">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" [attr.data-bs-target]="'#rc-c'+i" aria-expanded="false" [attr.aria-controls]="'rc-c'+i">
+                          <div class="d-flex flex-column w-100 me-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                              <span class="fw-semibold">{{ c.name }}</span>
+                            </div>
+                            <div class="small text-muted">
+                              <i class="bi bi-clock-history me-1"></i>
+                              <strong>Last Modified:</strong> {{ (c.modifiedDate || c.createdDate) ? ((c.modifiedDate || c.createdDate) | date:'short') : '-' }}
+                            </div>
+                          </div>
+                        </button>
+                      </h2>
+                      <div [id]="'rc-c'+i" class="accordion-collapse collapse" [attr.aria-labelledby]="'rc-h'+i" data-bs-parent="#recentContracts">
+                        <div class="accordion-body d-flex justify-content-between align-items-center">
+                          <div>
+                            <div class="small text-muted">Created {{ c.createdDate ? (c.createdDate | date:'medium') : '-' }}</div>
+                            <div class="small text-muted">Last Modified {{ c.modifiedDate ? (c.modifiedDate | date:'medium') : '-' }}</div>
+                          </div>
+                          <a [routerLink]="['/admin/contracts/view', c.id]" class="btn btn-outline-secondary btn-sm">Open</a>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="text-muted" *ngIf="!recentContracts?.length">No contracts found.</div>
+                  </div>
+                </div>
+              </div>
+            }
+
+            <!-- Submitted Proposals Widget (NPP Users Only) -->
+            @if (widget.id === 'submitted-proposals' && isNppUser()) {
+              <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                  <h5 class="mb-0">Submitted Proposals</h5>
+                  <a routerLink="/admin/proposals" class="small">View all</a>
+                </div>
+                <div class="card-body">
+                  <div class="accordion" id="submittedProposals">
+                    @if (loadingSubmittedProposals) {
+                      <div class="text-center py-3">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                          <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <span class="ms-2">Loading...</span>
+                      </div>
+                    } @else if (submittedProposals.length === 0) {
+                      <div class="text-muted">No submitted proposals awaiting review.</div>
+                    } @else {
+                      @for (proposal of submittedProposals; track proposal.id; let i = $index) {
+                        <div class="accordion-item">
+                          <h2 class="accordion-header" id="sp-h{{i}}">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" [attr.data-bs-target]="'#sp-c'+i" aria-expanded="false" [attr.aria-controls]="'sp-c'+i">
+                              <div class="d-flex flex-column w-100 me-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                  <span class="fw-semibold">{{ proposal.title }}</span>
+                                  <span class="badge bg-primary">Submitted</span>
+                                </div>
+                                <div class="small text-muted">
+                                  <i class="bi bi-building me-1"></i>
+                                  <strong>Manufacturer:</strong> {{ proposal.manufacturerName || 'N/A' }}
+                                </div>
+                              </div>
+                            </button>
+                          </h2>
+                          <div [id]="'sp-c'+i" class="accordion-collapse collapse" [attr.aria-labelledby]="'sp-h'+i" data-bs-parent="#submittedProposals">
+                            <div class="accordion-body">
+                              <div class="mb-2">
+                                <div class="small text-muted">
+                                  <i class="bi bi-clock-history me-1"></i>
+                                  <strong>Last Modified:</strong> {{ (proposal.modifiedDate || proposal.createdDate) ? ((proposal.modifiedDate || proposal.createdDate) | date:'medium') : '-' }}
+                                </div>
+                              </div>
+                              <div class="d-flex justify-content-end gap-2 mt-3">
+                                <a [routerLink]="['/admin/proposals', proposal.id]" class="btn btn-outline-primary btn-sm">
+                                  <i class="bi bi-box-arrow-up-right me-1"></i>Review & Award
+                                </a>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      }
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+
+            <!-- Expiring Contracts Widget (Admin Only) -->
+            @if (widget.id === 'expiring-contracts') {
+              <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                  <h5 class="mb-0">Contracts Due to Expire</h5>
+                  <a routerLink="/admin/contracts" class="small">View all</a>
+                </div>
+                <div class="card-body">
+                  <div class="accordion" id="expiringContracts">
+                    @if (loadingExpiringContracts) {
+                      <div class="text-center py-3">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                          <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <span class="ms-2">Loading...</span>
+                      </div>
+                    } @else if (expiringContractsWithoutProposals.length === 0) {
+                      <div class="text-muted">No contracts expiring within the next 90 days.</div>
+                    } @else {
+                      @for (contract of expiringContractsWithoutProposals; track contract.id; let i = $index) {
+                        <div class="accordion-item">
+                          <h2 class="accordion-header" id="ec-h{{i}}">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" [attr.data-bs-target]="'#ec-c'+i" aria-expanded="false" [attr.aria-controls]="'ec-c'+i">
+                              {{ contract.name }}
+                              @if (contract.daysUntilExpiry <= 3) {
+                                <span class="badge bg-danger ms-2">{{ contract.daysUntilExpiry }} days left</span>
+                              } @else {
+                                <span class="badge bg-warning text-dark ms-2">{{ contract.daysUntilExpiry }} days left</span>
+                              }
+                            </button>
+                          </h2>
+                          <div [id]="'ec-c'+i" class="accordion-collapse collapse" [attr.aria-labelledby]="'ec-h'+i" data-bs-parent="#expiringContracts">
+                            <div class="accordion-body">
+                              <div class="mb-2">
+                                <div class="small text-muted">Expires {{ contract.endDate | date:'medium' }}</div>
+                                <div class="small text-danger mt-1">
+                                  <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                  Not yet pushed to proposal workflow
+                                </div>
+                              </div>
+                              <div class="d-flex gap-2 mt-3">
+                                <a [routerLink]="['/admin/contracts/view', contract.id]" class="btn btn-outline-secondary btn-sm">View Contract</a>
+                                <a [routerLink]="['/admin/proposals/create']" [queryParams]="{contractId: contract.id}" class="btn btn-denim btn-sm">Create Proposal</a>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      }
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+
+            <!-- Velocity Data Exceptions Widget (Admin Only) -->
+            @if (widget.id === 'velocity-exceptions') {
+              <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                  <h5 class="mb-0">Velocity Data Exceptions</h5>
+                  <a routerLink="/admin/reports/velocity-exceptions" class="small">View all</a>
+                </div>
+                <div class="card-body p-0">
+                  @if (loadingVelocityExceptions) {
+                    <div class="text-center py-3">
+                      <div class="spinner-border spinner-border-sm text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                      </div>
+                      <span class="ms-2">Loading...</span>
+                    </div>
+                  } @else if (velocityExceptions.length === 0) {
+                    <div class="text-muted p-3">No velocity exceptions found.</div>
+                  } @else {
+                    <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                      <table class="table table-sm table-hover mb-0">
+                        <thead class="table-light sticky-top">
+                          <tr>
+                            <th style="width: 60px;">Job</th>
+                            <th style="width: 120px;">File</th>
+                            <th style="width: 50px;">Row</th>
+                            <th>Error</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (exception of velocityExceptions; track exception.id) {
+                            <tr>
+                              <td class="small">{{ exception.jobId }}</td>
+                              <td class="small text-truncate" style="max-width: 120px;" [title]="exception.fileName || 'N/A'">{{ exception.fileName || 'N/A' }}</td>
+                              <td class="small">{{ exception.rowIndex }}</td>
+                              <td class="small text-truncate" style="max-width: 200px;" [title]="exception.errorMessage || 'N/A'">{{ exception.errorMessage || 'N/A' }}</td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    @if (velocityExceptionsTotalPages > 1) {
+                      <div class="border-top p-2">
+                        <nav aria-label="Velocity exceptions pagination">
+                          <ul class="pagination pagination-sm justify-content-center mb-0">
+                            <li class="page-item" [class.disabled]="velocityExceptionsPage === 1">
+                              <a class="page-link" (click)="velocityExceptionsPage > 1 && onVelocityExceptionsPageChange(velocityExceptionsPage - 1)" style="cursor: pointer;">‹</a>
+                            </li>
+                            @for (page of [].constructor(Math.min(velocityExceptionsTotalPages, 4)); track $index; let i = $index) {
+                              <li class="page-item" [class.active]="velocityExceptionsPage === i + 1">
+                                <a class="page-link" (click)="onVelocityExceptionsPageChange(i + 1)" style="cursor: pointer;">{{ i + 1 }}</a>
+                              </li>
+                            }
+                            <li class="page-item" [class.disabled]="velocityExceptionsPage === velocityExceptionsTotalPages">
+                              <a class="page-link" (click)="velocityExceptionsPage < velocityExceptionsTotalPages && onVelocityExceptionsPageChange(velocityExceptionsPage + 1)" style="cursor: pointer;">›</a>
+                            </li>
+                          </ul>
+                        </nav>
+                      </div>
+                    }
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- Requested Proposals Widget (Manufacturer Only) -->
+            @if (widget.id === 'requested-proposals') {
+              <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                  <h5 class="mb-0">Requested Proposals</h5>
+                  <a routerLink="/admin/proposals" class="small">View all</a>
+                </div>
+                <div class="card-body">
+                  <div class="accordion" id="requestedProposals">
+                    @if (loadingRequestedProposals) {
+                      <div class="text-center py-3">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                          <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <span class="ms-2">Loading...</span>
+                      </div>
+                    } @else if (requestedProposals.length === 0) {
+                      <div class="text-muted">No requested proposals.</div>
+                    } @else {
+                      @for (proposal of requestedProposals; track proposal.id; let i = $index) {
+                        <div class="accordion-item">
+                          <h2 class="accordion-header" id="rqp-h{{i}}">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" [attr.data-bs-target]="'#rqp-c'+i" aria-expanded="false" [attr.aria-controls]="'rqp-c'+i">
+                              {{ proposal.title }}
+                              <span class="badge bg-primary ms-2">Requested</span>
+                            </button>
+                          </h2>
+                          <div [id]="'rqp-c'+i" class="accordion-collapse collapse" [attr.aria-labelledby]="'rqp-h'+i" data-bs-parent="#requestedProposals">
+                            <div class="accordion-body d-flex justify-content-between align-items-center">
+                              <div>
+                                <div class="small text-muted">Created {{ proposal.createdDate ? (proposal.createdDate | date:'medium') : '-' }}</div>
+                              </div>
+                              <a [routerLink]="['/admin/proposals', proposal.id]" class="btn btn-outline-secondary btn-sm">Open</a>
+                            </div>
+                          </div>
+                        </div>
+                      }
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+
+            <!-- Pending Proposals Widget (Manufacturer Only) -->
+            @if (widget.id === 'pending-proposals') {
+              <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                  <h5 class="mb-0">Pending Proposals</h5>
+                  <a routerLink="/admin/proposals" class="small">View all</a>
+                </div>
+                <div class="card-body">
+                  <div class="accordion" id="pendingProposals">
+                    @if (loadingPendingProposals) {
+                      <div class="text-center py-3">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                          <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <span class="ms-2">Loading...</span>
+                      </div>
+                    } @else if (pendingProposals.length === 0) {
+                      <div class="text-muted">No pending proposals.</div>
+                    } @else {
+                      @for (proposal of pendingProposals; track proposal.id; let i = $index) {
+                        <div class="accordion-item">
+                          <h2 class="accordion-header" id="pp-h{{i}}">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" [attr.data-bs-target]="'#pp-c'+i" aria-expanded="false" [attr.aria-controls]="'pp-c'+i">
+                              {{ proposal.title }}
+                              <span class="badge bg-warning text-dark ms-2">Pending</span>
+                            </button>
+                          </h2>
+                          <div [id]="'pp-c'+i" class="accordion-collapse collapse" [attr.aria-labelledby]="'pp-h'+i" data-bs-parent="#pendingProposals">
+                            <div class="accordion-body d-flex justify-content-between align-items-center">
+                              <div>
+                                <div class="small text-muted">Created {{ proposal.createdDate ? (proposal.createdDate | date:'medium') : '-' }}</div>
+                              </div>
+                              <a [routerLink]="['/admin/proposals', proposal.id]" class="btn btn-outline-secondary btn-sm">Open</a>
+                            </div>
+                          </div>
+                        </div>
+                      }
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+
+            <!-- Completed Proposals Widget (Manufacturer Only) -->
+            @if (widget.id === 'completed-proposals') {
+              <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                  <h5 class="mb-0">Completed Proposals (Last {{ completedProposalsDays }} Days)</h5>
+                  <a routerLink="/admin/proposals" class="small">View all</a>
+                </div>
+                <div class="card-body">
+                  <div class="accordion" id="completedProposals">
+                    @if (loadingCompletedProposals) {
+                      <div class="text-center py-3">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                          <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <span class="ms-2">Loading...</span>
+                      </div>
+                    } @else if (completedProposals.length === 0) {
+                      <div class="text-muted">No completed proposals in the last {{ completedProposalsDays }} days.</div>
+                    } @else {
+                      @for (proposal of completedProposals; track proposal.id; let i = $index) {
+                        <div class="accordion-item">
+                          <h2 class="accordion-header" id="cp-h{{i}}">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" [attr.data-bs-target]="'#cp-c'+i" aria-expanded="false" [attr.aria-controls]="'cp-c'+i">
+                              {{ proposal.title }}
+                              <span class="badge bg-success ms-2">Completed</span>
+                            </button>
+                          </h2>
+                          <div [id]="'cp-c'+i" class="accordion-collapse collapse" [attr.aria-labelledby]="'cp-h'+i" data-bs-parent="#completedProposals">
+                            <div class="accordion-body d-flex justify-content-between align-items-center">
+                              <div>
+                                <div class="small text-muted">Created {{ proposal.createdDate ? (proposal.createdDate | date:'medium') : '-' }}</div>
+                              </div>
+                              <a [routerLink]="['/admin/proposals', proposal.id]" class="btn btn-outline-secondary btn-sm">Open</a>
+                            </div>
+                          </div>
+                        </div>
+                      }
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+
+          </div>
+        }
+
+      </div>
+    </div>
+  </div>
+</main>

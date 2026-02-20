@@ -1,0 +1,26 @@
+.bg-denim {
+  background-color: var(--denim-color);
+}
+
+#breadcrumb {
+  margin-bottom: 1em;
+}
+
+.table-responsive {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+:host .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+}
+

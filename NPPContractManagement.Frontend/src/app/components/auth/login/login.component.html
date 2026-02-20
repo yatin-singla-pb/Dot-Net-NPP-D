@@ -1,0 +1,78 @@
+<header class="container fixed-top">
+  <div class="d-flex">
+    <img src="assets/images/npp_logo_denim.jpg" alt="NPP Logo" />
+  </div>
+</header>
+
+<main class="container">
+  <div class="row justify-content-center">
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="col-4">
+
+      <div class="mb-3">
+        Welcome to the NPPGov nutrition contract management portal.
+        Enter your User ID and password below to authenticate. If you need a User ID, please contact NPPGov.
+      </div>
+
+      <!-- Error Message -->
+      <div *ngIf="error" class="alert alert-danger mb-3" role="alert">
+        <i class="fa-solid fa-exclamation-triangle me-2"></i>
+        {{error}}
+      </div>
+
+      <!-- User ID Field -->
+      <div class="mb-3 form-floating">
+        <input
+          type="text"
+          class="form-control"
+          [class.is-invalid]="isFieldInvalid('email')"
+          id="userId"
+          formControlName="email"
+          placeholder="Enter your User ID"
+          name="userId">
+        <label for="userId">User ID</label>
+        <div *ngIf="isFieldInvalid('email')" class="invalid-feedback">
+          {{getFieldError('email')}}
+        </div>
+      </div>
+
+      <!-- Password Field -->
+      <div class="mb-3 form-floating">
+        <input
+          type="password"
+          class="form-control"
+          [class.is-invalid]="isFieldInvalid('password')"
+          id="password"
+          formControlName="password"
+          placeholder="Password"
+          name="password">
+        <label for="password">Password</label>
+        <div *ngIf="isFieldInvalid('password')" class="invalid-feedback">
+          {{getFieldError('password')}}
+        </div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="d-flex justify-content-between">
+        <button
+          type="button"
+          class="btn btn-denim"
+          routerLink="/forgot-password">
+          Forgot Password
+        </button>
+        <button
+          type="submit"
+          class="btn btn-denim"
+          [disabled]="loading || loginForm.invalid">
+          <span *ngIf="loading" class="spinner-border spinner-border-sm me-2" role="status"></span>
+          {{loading ? 'Submitting...' : 'Submit'}}
+        </button>
+      </div>
+
+      <div class="text-center mt-3">
+        <span class="text-muted">Received an invitation?</span>
+        <a routerLink="/register" class="ms-1">Register your account</a>
+      </div>
+
+    </form>
+  </div>
+</main>

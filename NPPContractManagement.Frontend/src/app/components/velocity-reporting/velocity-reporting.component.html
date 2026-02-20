@@ -1,0 +1,306 @@
+<main class="container">
+  <nav aria-label="breadcrumb" id="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a routerLink="/dashboard">Dashboard</a></li>
+      <li class="breadcrumb-item active">Velocity Reporting</li>
+    </ol>
+  </nav>
+
+  <h2 class="mb-4">Velocity Data Reporting</h2>
+
+  <!-- File Upload Section -->
+  <div class="card mb-4">
+    <div class="card-header bg-denim text-white">
+      <h5 class="mb-0">Upload CSV or Excel File</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-8">
+          <!-- Distributor Selection -->
+          <div class="mb-3">
+            <label class="form-label">Distributor <span class="text-danger">*</span></label>
+            <div class="form-control p-2" (click)="!uploading && toggleDistributorPanel()" tabindex="0" style="cursor: pointer;">
+              @if (selectedDistributorName) {
+                <span class="badge text-bg-denim rounded-pill me-1">
+                  {{ selectedDistributorName }}
+                  <button
+                    *ngIf="!uploading"
+                    type="button"
+                    class="btn-close btn-close-white btn-sm ms-1"
+                    (click)="clearDistributor(); $event.stopPropagation()"
+                    aria-label="Remove">
+                  </button>
+                </span>
+              } @else {
+                <span class="text-muted">Select distributor...</span>
+              }
+            </div>
+            <div class="position-relative">
+              <div class="dropdown-menu d-block w-100 p-2" *ngIf="showDistributorPanel">
+                <input
+                  class="form-control mb-2"
+                  [value]="distributorFilter"
+                  (input)="applyDistributorFilter($any($event.target).value)"
+                  placeholder="Search distributors..."
+                  autofocus>
+                <div style="max-height:240px; overflow:auto;">
+                  @if (loadingDistributors) {
+                    <div class="text-center text-muted py-3">
+                      <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                      Loading distributors...
+                    </div>
+                  } @else if (filteredDistributors.length === 0) {
+                    <div class="text-center text-muted py-3">
+                      No distributors found
+                    </div>
+                  } @else {
+                    @for (d of filteredDistributors; track d.id) {
+                      <div class="form-check">
+                        <input
+                          class="form-check-input"
+                          type="radio"
+                          name="distributorRadio"
+                          [id]="'dist-' + d.id"
+                          [checked]="selectedDistributorId === d.id"
+                          (change)="selectDistributor(d)">
+                        <label class="form-check-label" [for]="'dist-' + d.id">
+                          {{ d.name }}
+                        </label>
+                      </div>
+                    }
+                  }
+                </div>
+                <div class="mt-2 text-end">
+                  <button type="button" class="btn btn-sm btn-secondary me-2" (click)="closeDistributorPanel()">Close</button>
+                  <button type="button" class="btn btn-sm btn-denim" (click)="applyDistributorSelection()">Apply</button>
+                </div>
+              </div>
+            </div>
+            <div class="form-text">Select the distributor for this velocity data import</div>
+          </div>
+
+          <!-- File Selection -->
+          <div class="mb-3">
+            <label for="fileInput" class="form-label">Select CSV or Excel File <span class="text-danger">*</span></label>
+            <input
+              type="file"
+              class="form-control"
+              id="fileInput"
+              accept=".csv,.xlsx,.xls"
+              (change)="onFileSelected($event)"
+              [disabled]="uploading">
+            <div class="form-text">Supported formats: CSV (.csv), Excel (.xlsx, .xls) - Max 10 MB</div>
+          </div>
+
+          @if (uploadError) {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ uploadError }}
+              <button type="button" class="btn-close" (click)="uploadError = null"></button>
+            </div>
+          }
+
+          @if (uploadSuccess) {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+              <i class="bi bi-check-circle-fill me-2"></i>{{ uploadSuccess }}
+              <button type="button" class="btn-close" (click)="uploadSuccess = null"></button>
+            </div>
+          }
+
+          <div class="d-flex gap-2 align-items-center">
+            <button
+              class="btn btn-denim"
+              (click)="uploadFile()"
+              [disabled]="!selectedFile || !selectedDistributorId || uploading">
+              @if (uploading) {
+                <span class="spinner-border spinner-border-sm me-1" role="status"></span>Uploading...
+              } @else {
+                Import Data
+              }
+            </button>
+            <button class="btn btn-outline-secondary" (click)="downloadTemplate()">
+              Download Sample Template
+            </button>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card bg-light">
+            <div class="card-body">
+              <h6 class="card-title">File Format (20 Fields)</h6>
+              <div class="small" style="max-height: 300px; overflow-y: auto;">
+                <p class="mb-2"><strong>All fields are optional:</strong></p>
+                <ol class="mb-0 ps-4">
+                  <li>OPCO</li>
+                  <li>Customer #</li>
+                  <li>Customer Name</li>
+                  <li>Address One</li>
+                  <li>Address Two</li>
+                  <li>City</li>
+                  <li>Zip Code</li>
+                  <li>Invoice #</li>
+                  <li>Invoice Date</li>
+                  <li>Product #</li>
+                  <li>Brand</li>
+                  <li>Pack Size</li>
+                  <li>Description</li>
+                  <li>Corp Manuf #</li>
+                  <li>GTIN</li>
+                  <li>Manufacturer Name</li>
+                  <li>Qty</li>
+                  <li>Sales</li>
+                  <li>Landed Cost</li>
+                  <li>Allowances</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Preview Section -->
+  @if (showPreview && previewRows.length > 0) {
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0">Preview (First 10 Rows)</h5>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered">
+            <thead class="table-light">
+              <tr>
+                @for (header of previewHeaders; track header) {
+                  <th>{{ header }}</th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of previewRows; track $index) {
+                <tr>
+                  @for (header of previewHeaders; track header) {
+                    <td>{{ row[header] }}</td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Recent Jobs Section -->
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">Recent Import Jobs</h5>
+      <button class="btn btn-sm btn-outline-secondary" (click)="loadRecentJobs()">
+        <i class="bi bi-arrow-clockwise"></i> Refresh
+      </button>
+    </div>
+    <div class="card-body">
+      @if (loadingJobs) {
+        <div class="text-center py-4">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="mt-2">Loading jobs...</p>
+        </div>
+      } @else if (recentJobs.length === 0) {
+        <div class="alert alert-info mb-0">
+          <i class="bi bi-info-circle me-2"></i>
+          No import jobs found. Upload a CSV file to get started.
+        </div>
+      } @else {
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Job ID</th>
+                <th>Status</th>
+                <th>File Name</th>
+                <th>Progress</th>
+                <th>Total Rows</th>
+                <th>Success</th>
+                <th>Failed</th>
+                <th>Created</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (job of recentJobs; track job.id) {
+                <tr>
+                  <td><code>{{ job.jobId.substring(0, 12) }}...</code></td>
+                  <td>
+                    <span [class]="getStatusClass(job.status)">{{ getJobStatusText(job) }}</span>
+                    @if (job.status.toLowerCase() === 'processing' || job.status.toLowerCase() === 'queued') {
+                      <div class="spinner-border spinner-border-sm ms-2" role="status">
+                        <span class="visually-hidden">Processing...</span>
+                      </div>
+                    }
+                  </td>
+                  <td>{{ job.fileName || '-' }}</td>
+                  <td>
+                    @if (job.status.toLowerCase() === 'processing') {
+                      <div class="progress" style="width: 100px; height: 20px;">
+                        <div class="progress-bar" role="progressbar"
+                             [style.width.%]="getJobProgressPercentage(job)"
+                             [attr.aria-valuenow]="getJobProgressPercentage(job)"
+                             aria-valuemin="0" aria-valuemax="100">
+                          {{ getJobProgressPercentage(job) }}%
+                        </div>
+                      </div>
+                    } @else {
+                      <span class="text-muted">-</span>
+                    }
+                  </td>
+                  <td>{{ job.totalRows }}</td>
+                  <td><span class="text-success">{{ job.successRows }}</span></td>
+                  <td><span class="text-danger">{{ job.failedRows }}</span></td>
+                  <td>{{ job.createdAt | date:'yyyy-MM-dd HH:mm:ss' }}</td>
+                  <td>
+                    <div class="d-flex gap-1">
+                      <a [routerLink]="['/admin/velocity/jobs', job.jobId]" class="btn btn-sm btn-denim">
+                        <i class="bi bi-eye"></i> View
+                      </a>
+                      @if (canRestartJob(job)) {
+                        <button
+                          class="btn btn-sm btn-denim"
+                          (click)="restartJob(job); $event.stopPropagation()"
+                          [disabled]="restartingJobId === job.jobId"
+                          title="Restart this job">
+                          @if (restartingJobId === job.jobId) {
+                            <span class="spinner-border spinner-border-sm" role="status"></span>
+                          } @else {
+                            <i class="bi bi-arrow-clockwise"></i> Restart
+                          }
+                        </button>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        @if (totalPages > 1) {
+          <nav aria-label="Job pagination">
+            <ul class="pagination justify-content-center mb-0 mt-3">
+              <li class="page-item" [class.disabled]="currentPage === 1">
+                <button class="page-link" (click)="previousPage()" [disabled]="currentPage === 1">Previous</button>
+              </li>
+              <li class="page-item active">
+                <span class="page-link">{{ currentPage }} of {{ totalPages }}</span>
+              </li>
+              <li class="page-item" [class.disabled]="currentPage === totalPages">
+                <button class="page-link" (click)="nextPage()" [disabled]="currentPage === totalPages">Next</button>
+              </li>
+            </ul>
+          </nav>
+        }
+      }
+    </div>
+  </div>
+</main>
+

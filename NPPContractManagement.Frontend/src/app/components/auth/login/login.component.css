@@ -1,0 +1,77 @@
+/* Login Component Styles - Matching NPP Template */
+
+header {
+  height: 75px;
+  border-bottom: thin solid rgba(0, 45, 64, 0.1);
+  padding-top: 10px;
+  padding-bottom: 10px;
+  background-color: var(--white);
+  z-index: 1000;
+}
+/* Make login page logo slightly larger to match template */
+header img {
+  height: 50px;
+  width: auto;
+}
+
+
+main {
+  margin-top: 95px;
+  padding-top: 2rem;
+}
+
+.fc-denim {
+  color: var(--denim-color);
+}
+
+.btn-denim {
+  background-color: var(--denim-color);
+  color: var(--white);
+  border-color: var(--denim-color);
+}
+
+.btn-denim.active {
+  background-color: var(--blue-color);
+}
+
+.btn-denim:hover {
+  border: thin solid var(--denim-color);
+  color: var(--denim-color);
+  background-color: var(--blue-color);
+}
+
+.btn-denim:disabled {
+  background-color: rgba(0, 45, 64, 0.6);
+  border-color: rgba(0, 45, 64, 0.6);
+  color: var(--white);
+}
+
+.form-control:focus {
+  border-color: var(--denim-color);
+  box-shadow: 0 0 0 0.2rem rgba(0, 45, 64, 0.25);
+}
+
+.alert-danger {
+  border-color: #dc3545;
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.invalid-feedback {
+  color: #dc3545;
+}
+
+.is-invalid {
+  border-color: #dc3545;
+}
+
+.spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Form floating styles to match Bootstrap */
+.form-floating > .form-control:focus ~ label,
+.form-floating > .form-control:not(:placeholder-shown) ~ label {
+  color: var(--denim-color);
+}

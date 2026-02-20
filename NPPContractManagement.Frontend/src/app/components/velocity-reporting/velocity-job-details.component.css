@@ -1,0 +1,44 @@
+.table th {
+  font-weight: 600;
+  background-color: #f8f9fa;
+}
+
+.badge {
+  font-size: 0.875rem;
+  padding: 0.35em 0.65em;
+}
+
+.btn-group-sm .btn {
+  font-size: 0.875rem;
+}
+
+.alert {
+  border-radius: 0.375rem;
+}
+
+.card {
+  border-radius: 0.5rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.card-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+  font-weight: 600;
+}
+
+.breadcrumb {
+  background-color: transparent;
+  padding: 0;
+}
+
+.table-responsive {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.table-sm th,
+.table-sm td {
+  padding: 0.5rem;
+}
+

@@ -1,0 +1,132 @@
+/* Header Component Styles - Matching NPP Template */
+
+header {
+  height: 75px;
+  border-bottom: thin solid rgba(0, 45, 64, 0.1);
+  padding-top: 10px;
+  padding-bottom: 10px;
+  background-color: var(--white);
+}
+
+/* Logo Styling */
+header img {
+  height: 50px;
+  width: auto;
+}
+/* Align the nav with the bottom of the logo, as in the template */
+header .d-inline-flex { align-items: flex-end; }
+
+
+/* Navigation Links (match template font/color) */
+.d-inline-flex a {
+  color: var(--denim-color) !important;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+  font-weight: 400;
+  font-size: 15px; /* match template base */
+}
+
+.d-inline-flex a:hover {
+  background-color: var(--blue-color);
+  text-decoration: none;
+}
+
+/* User dropdown link styling (no extra padding to keep alignment) */
+.align-self-end a {
+  color: var(--denim-color);
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.align-self-end a:hover {
+  background-color: var(--blue-color);
+  text-decoration: none;
+}
+
+/* Dropdown Styles */
+.dropdown-toggle::after {
+  margin-left: 0.5em;
+}
+
+.navbar-brand {
+  font-size: 1.5rem;
+  color: var(--denim-color) !important;
+}
+
+.text-denim {
+  color: var(--denim-color) !important;
+}
+
+.nav-link {
+  color: var(--denim-color) !important;
+  font-weight: 400;
+  transition: color 0.2s ease;
+}
+
+.nav-link:hover,
+.nav-link.active {
+  color: var(--denim-color) !important;
+}
+
+.dropdown-menu {
+  border: none;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+
+.dropdown-item {
+  padding: 0.5rem 1rem;
+  transition: background-color 0.3s ease;
+  color: #212529 !important; /* match template body color */
+  font-size: 14px;
+}
+
+.dropdown-item:hover {
+  background-color: var(--blue-color);
+  color: var(--denim-color) !important;
+}
+
+.dropdown-item.text-danger:hover {
+  background-color: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+}
+
+.user-avatar {
+  color: var(--denim-color);
+}
+
+.user-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  line-height: 1.2;
+}
+
+.user-role {
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+.navbar-toggler {
+  border: none;
+  padding: 0.25rem 0.5rem;
+}
+
+.navbar-toggler:focus {
+  box-shadow: none;
+}
+
+.border-bottom {
+  border-color: rgba(0, 45, 64, 0.1) !important;
+}
+
+@media (max-width: 991.98px) {
+  .navbar-collapse {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(0, 45, 64, 0.1);
+  }
+
+  .user-info {
+    display: block !important;
+  }
+}

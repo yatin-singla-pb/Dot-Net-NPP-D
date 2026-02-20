@@ -1,0 +1,22 @@
+pre {
+  max-height: 300px;
+  overflow-y: auto;
+  font-size: 0.875rem;
+}
+
+.table-responsive {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.btn-denim {
+  background-color: #4a6fa5;
+  color: white;
+  border: none;
+}
+
+.btn-denim:hover {
+  background-color: #3a5a85;
+  color: white;
+}
+

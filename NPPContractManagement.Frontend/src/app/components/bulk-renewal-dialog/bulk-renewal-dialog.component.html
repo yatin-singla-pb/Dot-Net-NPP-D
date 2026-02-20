@@ -1,0 +1,81 @@
+<h2 mat-dialog-title>Create Renewal Proposals</h2>
+
+<mat-dialog-content>
+  <div class="dialog-content">
+    <p class="info-text">
+      <strong>{{ data.contractCount }}</strong> contract(s) selected for renewal
+    </p>
+
+    <div class="form-section">
+      <h3>Pricing Adjustment</h3>
+      
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Percentage Change</mat-label>
+        <input matInput type="number" [(ngModel)]="percentageChange" step="0.1"
+               >
+        <span matSuffix>%</span>
+        <mat-hint>Enter positive for increase, negative for decrease</mat-hint>
+      </mat-form-field>
+
+      <mat-checkbox [(ngModel)]="applyToAllProducts" class="checkbox-field">
+        Apply to all products
+      </mat-checkbox>
+
+      @if (!applyToAllProducts) {
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Minimum Quantity Threshold</mat-label>
+          <input matInput type="number" [(ngModel)]="minimumQuantityThreshold"
+                 >
+          <mat-hint>Leave empty to apply to all products</mat-hint>
+        </mat-form-field>
+      }
+
+      <div class="adjustment-preview">
+        <strong>Adjustment:</strong> {{ adjustmentDescription }}
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h3>Proposal Details</h3>
+      
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Proposal Due Date</mat-label>
+        <input matInput [matDatepicker]="picker" [(ngModel)]="proposalDueDate">
+        <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-datepicker #picker></mat-datepicker>
+        <mat-hint>Suggested due date for manufacturer response</mat-hint>
+      </mat-form-field>
+    </div>
+
+    <div class="info-section">
+      <h4>What will happen:</h4>
+      <ul>
+        <li>A new proposal request will be created for each selected contract</li>
+        <li>Proposals will inherit industries, op-cos, manufacturer, and distributor from source contracts</li>
+        <li>Term dates will start 1 day after contract end date and run for the same duration</li>
+        <li>Only non-discontinued products will be included</li>
+        <li>Pricing adjustments will be applied based on your settings above</li>
+      </ul>
+    </div>
+
+    @if (errorMessage) {
+      <div class="error-message">
+        <mat-icon>error</mat-icon>
+        {{ errorMessage }}
+      </div>
+    }
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()" [disabled]="processing">Cancel</button>
+  <button mat-raised-button color="primary" (click)="onSubmit()" 
+          [disabled]="!isValid || processing">
+    @if (processing) {
+      <span>Creating Proposals...</span>
+    } @else {
+      <span>Create {{ data.contractCount }} Proposal(s)</span>
+    }
+  </button>
+</mat-dialog-actions>
+

@@ -1,0 +1,25 @@
+.table-responsive {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.sticky-top {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: #f8f9fa;
+}
+
+.table th {
+  white-space: nowrap;
+  font-size: 0.875rem;
+}
+
+.table td {
+  font-size: 0.875rem;
+}
+
+.bg-light {
+  background-color: #f8f9fa !important;
+}
+

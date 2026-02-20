@@ -1,0 +1,309 @@
+<div class="container mt-4">
+  <h2>Velocity Usage Report</h2>
+  <p class="text-muted">Analyze velocity data and create proposals from usage patterns</p>
+
+  <!-- Filters -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <h5 class="card-title">Filters</h5>
+      <div class="row">
+        <div class="col-md-3">
+          <label for="startDate" class="form-label">Start Date</label>
+          <input
+            type="date"
+            id="startDate"
+            class="form-control"
+            [(ngModel)]="startDate"
+            [class.has-value]="startDate"
+          />
+        </div>
+        <div class="col-md-3">
+          <label for="endDate" class="form-label">End Date</label>
+          <input
+            type="date"
+            id="endDate"
+            class="form-control"
+            [(ngModel)]="endDate"
+            [class.has-value]="endDate"
+          />
+        </div>
+        <div class="col-md-3">
+          <label for="keyword" class="form-label">Keyword</label>
+          <input
+            type="text"
+            id="keyword"
+            class="form-control"
+            [(ngModel)]="keyword"
+            placeholder="Search by product name or code..."
+          />
+        </div>
+        <div class="col-md-3">
+          <label for="manufacturer" class="form-label">Manufacturer</label>
+          <select
+            id="manufacturer"
+            class="form-select"
+            [(ngModel)]="selectedManufacturerIds"
+            multiple
+          >
+            <option *ngFor="let mfr of manufacturers" [value]="mfr.id">{{ mfr.name }}</option>
+          </select>
+        </div>
+      </div>
+      <div class="row mt-3">
+        <div class="col-md-3">
+          <label for="opCo" class="form-label">Op-Co</label>
+          <select
+            id="opCo"
+            class="form-select"
+            [(ngModel)]="selectedOpCoIds"
+            multiple
+          >
+            <option *ngFor="let opCo of opCos" [value]="opCo.id">{{ opCo.name }}</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label for="industry" class="form-label">Industry</label>
+          <select
+            id="industry"
+            class="form-select"
+            [(ngModel)]="selectedIndustryIds"
+            multiple
+          >
+            <option *ngFor="let industry of industries" [value]="industry.id">{{ industry.name }}</option>
+          </select>
+        </div>
+        <div class="col-md-6 d-flex align-items-end">
+          <button class="btn btn-denim me-2" (click)="onFilterChange()">Apply Filters</button>
+          <button class="btn btn-outline-secondary" (click)="startDate = ''; endDate = ''; keyword = ''; selectedManufacturerIds = []; selectedOpCoIds = []; selectedIndustryIds = []; onFilterChange()">Clear Filters</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Indicator -->
+  <div *ngIf="loading" class="text-center my-4">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div *ngIf="!loading">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <strong>Total Records:</strong> {{ totalCount }} | 
+        <strong>Selected:</strong> {{ selectedGroupKeys.size }}
+      </div>
+      <div>
+        <button class="btn btn-sm btn-outline-primary me-2" (click)="selectAll()">Select All on Page</button>
+        <button class="btn btn-sm btn-outline-secondary me-2" (click)="deselectAll()">Deselect All on Page</button>
+        <button class="btn btn-success me-2" (click)="openProposalModal()" [disabled]="selectedGroupKeys.size === 0">
+          Create Proposal ({{ selectedGroupKeys.size }})
+        </button>
+        <label for="pageSize" class="me-2">Rows per page:</label>
+        <select id="pageSize" class="form-select d-inline-block w-auto" [(ngModel)]="pageSize" (change)="onPageSizeChange()">
+          <option [value]="25">25</option>
+          <option [value]="50">50</option>
+          <option [value]="100">100</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-striped table-hover table-sm">
+        <thead class="table-dark sticky-top">
+          <tr>
+            <th style="width: 50px;">
+              <input type="checkbox" class="form-check-input" (change)="$event.target.checked ? selectAll() : deselectAll()" />
+            </th>
+            <th>Manufacturer</th>
+            <th>Product</th>
+            <th>Cases Purchased</th>
+            <th>Min Date</th>
+            <th>Max Date</th>
+            <th>Product ID</th>
+            <th>Brand</th>
+            <th>Pack Size</th>
+            <th>GTIN</th>
+            <th>Avg Landed Cost</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <ng-container *ngFor="let agg of aggregates">
+            <tr [class.table-primary]="isRowSelected(agg.groupKey)">
+              <td>
+                <input
+                  type="checkbox"
+                  class="form-check-input"
+                  [checked]="isRowSelected(agg.groupKey)"
+                  (change)="toggleRowSelection(agg.groupKey)"
+                />
+              </td>
+              <td>{{ agg.manufacturer || 'N/A' }}</td>
+              <td>{{ agg.productDescription || agg.product || 'N/A' }}</td>
+              <td>{{ agg.casesPurchased }}</td>
+              <td>{{ formatDateTime(agg.minShipmentDate) }}</td>
+              <td>{{ formatDateTime(agg.maxShipmentDate) }}</td>
+              <td>{{ agg.productId || 'N/A' }}</td>
+              <td>{{ agg.brand || 'N/A' }}</td>
+              <td>{{ agg.packSize || 'N/A' }}</td>
+              <td>{{ agg.gtin || 'N/A' }}</td>
+              <td>{{ formatCurrency(agg.avgLandedCost) }}</td>
+              <td>
+                <button
+                  class="btn btn-sm btn-outline-info"
+                  (click)="toggleRowDetails(agg.groupKey)"
+                >
+                  {{ isRowExpanded(agg.groupKey) ? 'Hide' : 'Show' }} Details
+                </button>
+              </td>
+            </tr>
+            <!-- Expanded Details Row -->
+            <tr *ngIf="isRowExpanded(agg.groupKey)">
+              <td colspan="12">
+                <div class="p-3 bg-light">
+                  <h6>Individual Velocity Records</h6>
+                  <div *ngIf="loadingDetails" class="text-center">
+                    <div class="spinner-border spinner-border-sm" role="status">
+                      <span class="visually-hidden">Loading...</span>
+                    </div>
+                  </div>
+                  <div *ngIf="!loadingDetails && detailRecords.length > 0" class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <table class="table table-sm table-bordered">
+                      <thead class="table-light">
+                        <tr>
+                          <th>Invoice Date</th>
+                          <th>Invoice #</th>
+                          <th>Customer</th>
+                          <th>Op-Co</th>
+                          <th>Cases</th>
+                          <th>Landed Cost</th>
+                          <th>Product ID</th>
+                          <th>Brand</th>
+                          <th>Description</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr *ngFor="let detail of detailRecords">
+                          <td>{{ formatDateTime(detail.invoiceDate) }}</td>
+                          <td>{{ detail.invoiceNumber || 'N/A' }}</td>
+                          <td>{{ detail.customerName || 'N/A' }}</td>
+                          <td>{{ detail.opCo || 'N/A' }}</td>
+                          <td>{{ detail.casesPurchased || 0 }}</td>
+                          <td>{{ formatCurrency(detail.landedCost) }}</td>
+                          <td>{{ detail.productId || 'N/A' }}</td>
+                          <td>{{ detail.brand || 'N/A' }}</td>
+                          <td>{{ detail.productDescription || 'N/A' }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <div *ngIf="!loadingDetails && detailRecords.length === 0">
+                    <p class="text-muted">No detail records found.</p>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </ng-container>
+          <tr *ngIf="aggregates.length === 0">
+            <td colspan="12" class="text-center text-muted">
+              No data found. Try adjusting your filters.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <nav *ngIf="totalPages > 1" aria-label="Page navigation">
+      <ul class="pagination justify-content-center">
+        <li class="page-item" [class.disabled]="currentPage === 1">
+          <a class="page-link" (click)="onPageChange(currentPage - 1)" href="javascript:void(0)">Previous</a>
+        </li>
+        <li
+          *ngFor="let page of getPaginationPages()"
+          class="page-item"
+          [class.active]="page === currentPage"
+        >
+          <a class="page-link" (click)="onPageChange(page)" href="javascript:void(0)">{{ page }}</a>
+        </li>
+        <li class="page-item" [class.disabled]="currentPage === totalPages">
+          <a class="page-link" (click)="onPageChange(currentPage + 1)" href="javascript:void(0)">Next</a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</div>
+
+<!-- Proposal Creation Modal -->
+<div class="modal" [class.show]="showProposalModal" [style.display]="showProposalModal ? 'block' : 'none'" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Create Proposal from Velocity Data</h5>
+        <button type="button" class="btn-close" (click)="closeProposalModal()"></button>
+      </div>
+      <div class="modal-body">
+        <p>You have selected <strong>{{ selectedGroupKeys.size }}</strong> product(s) to create proposal(s).</p>
+
+        <div class="mb-3">
+          <label for="proposalTitle" class="form-label">Proposal Title</label>
+          <input
+            type="text"
+            id="proposalTitle"
+            class="form-control"
+            [(ngModel)]="proposalTitle"
+          />
+        </div>
+
+        <div class="mb-3">
+          <label for="proposalDueDate" class="form-label">Proposal Due Date</label>
+          <input
+            type="date"
+            id="proposalDueDate"
+            class="form-control"
+            [(ngModel)]="proposalDueDate"
+            [class.has-value]="proposalDueDate"
+          />
+        </div>
+
+        <h6>Usage Quantity Estimation (Optional)</h6>
+        <p class="text-muted small">Adjust estimated quantities based on historical usage</p>
+
+        <div class="row">
+          <div class="col-md-6">
+            <label for="quantityAdjustment" class="form-label">Quantity Adjustment (%)</label>
+            <input
+              type="number"
+              id="quantityAdjustment"
+              class="form-control"
+              [(ngModel)]="quantityAdjustmentPercent"
+            />
+            <small class="text-muted">Positive for increase, negative for decrease</small>
+          </div>
+          <div class="col-md-6">
+            <label for="minThreshold" class="form-label">Minimum Quantity Threshold</label>
+            <input
+              type="number"
+              id="minThreshold"
+              class="form-control"
+              [(ngModel)]="minimumQuantityThreshold"
+            />
+            <small class="text-muted">Only apply adjustment if quantity >= threshold</small>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeProposalModal()" [disabled]="creatingProposal">Cancel</button>
+        <button type="button" class="btn btn-denim" (click)="createProposals()" [disabled]="creatingProposal">
+          <span *ngIf="creatingProposal" class="spinner-border spinner-border-sm me-2" role="status"></span>
+          {{ creatingProposal ? 'Creating...' : 'Create Proposal(s)' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade" [class.show]="showProposalModal" *ngIf="showProposalModal"></div>
+
+

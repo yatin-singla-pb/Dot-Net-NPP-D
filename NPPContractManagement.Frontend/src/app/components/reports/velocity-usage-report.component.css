@@ -1,0 +1,56 @@
+.table-responsive {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.sticky-top {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.btn-denim {
+  background-color: #4a6fa5;
+  color: white;
+  border: none;
+}
+
+.btn-denim:hover {
+  background-color: #3a5a85;
+  color: white;
+}
+
+.btn-denim:disabled {
+  background-color: #6a8fb5;
+  color: white;
+}
+
+.modal.show {
+  display: block;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-backdrop.show {
+  opacity: 0.5;
+}
+
+select[multiple] {
+  height: 100px;
+}
+
+.table-primary {
+  background-color: #cfe2ff !important;
+}
+
+.form-check-input {
+  cursor: pointer;
+}
+
+.table th {
+  white-space: nowrap;
+}
+
+.table td {
+  vertical-align: middle;
+}
+
