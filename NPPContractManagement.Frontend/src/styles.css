@@ -1,0 +1,395 @@
+/* You can add global styles to this file, and also import other style files */
+
+/* Import Bootstrap CSS */
+@import 'bootstrap/dist/css/bootstrap.min.css';
+
+/* Import NPP Theme */
+@import './app/shared/styles/npp-theme.css';
+
+/* Breadcrumb link color to match navigation menu */
+#breadcrumb .breadcrumb-item a {
+  color: var(--denim-color) !important;
+}
+
+/* NPP Contract Management Custom Variables */
+:root {
+    --denim-color: rgb(0, 45, 64);
+    --denim-color-20: rgba(0, 45, 64, .2);
+    --blue-color: rgb(87, 168, 204);
+    --white: rgb(255, 255, 255);
+    font-size: 15px;
+}
+
+/* Global styles for NPP Contract Management */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f8f9fa;
+}
+
+/* NPP Header Styles */
+header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 75px;
+    border-bottom: thin solid var(--denim-color-20);
+    padding-top: 10px;
+    padding-bottom: 10px;
+    background-color: #ffffff;
+    z-index: 1000;
+}
+
+/* Ensure all page content sits below fixed header */
+.app-content {
+    padding-top: 75px;
+}
+
+.app-content .container {
+    padding-top: 0;
+}
+
+.proposal-page,
+#proposal_page_content,
+#proposal_panels_container {
+    margin-top: 0 !important;
+}
+
+#breadcrumb {
+    margin-bottom: 0;
+}
+
+.fc-denim {
+    color: var(--denim-color);
+}
+
+/* NPP Link Styles */
+a {
+    color: var(--denim-color);
+    text-decoration: none;
+}
+
+a:hover,
+a:focus {
+    text-decoration: underline;
+    color: var(--denim-color) !important;
+}
+
+/* Breadcrumb colors to match template */
+#breadcrumb .breadcrumb-item a {
+  /* color: #3b82f6 !important; */
+  color: denim-color;
+  text-decoration: none;
+}
+#breadcrumb .breadcrumb-item a:hover {
+  color: #2563eb !important;
+  text-decoration: underline;
+}
+#breadcrumb .breadcrumb-item.active {
+  color: #64748b !important;
+}
+
+/* NPP Button Styles */
+.btn-denim {
+    background-color: var(--denim-color);
+    color: var(--white);
+    border-color: var(--denim-color);
+}
+
+.btn-denim.active {
+    background-color: var(--blue-color);
+}
+
+.btn-denim:hover {
+    border: thin solid var(--denim-color);
+    color: var(--denim-color);
+    background-color: var(--blue-color);
+}
+
+.btn-denim:focus, .btn-denim.focus {
+  box-shadow: 0 0 0 0.2rem rgba(0, 45, 64, 0.5);
+}
+
+.btn-denim:disabled, .btn-denim.disabled {
+  background-color: var(--denim-color);
+  border-color: var(--denim-color);
+  opacity: 0.6;
+}
+
+/* Custom loading spinner */
+.spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Custom form styles */
+.form-control:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Custom table styles */
+.table-hover tbody tr:hover {
+  background-color: rgba(0, 123, 255, 0.075);
+}
+
+/* Custom card styles */
+.card {
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+/* Custom navbar styles */
+.navbar-brand {
+  font-weight: bold;
+  font-size: 1.5rem;
+}
+
+/* Custom alert styles */
+.alert {
+  border: none;
+  border-radius: 0.375rem;
+}
+
+/* Custom badge styles */
+.badge {
+  font-size: 0.75em;
+}
+
+/* Utility classes */
+.text-muted {
+  color: #6c757d !important;
+}
+
+.bg-light {
+  background-color: #f8f9fa !important;
+}
+
+/* Custom responsive utilities */
+@media (max-width: 576px) {
+  .table-responsive-sm {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+  }
+}
+
+/* Custom animation classes */
+.fade-in {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* NPP Additional Styles */
+.clickable {
+    cursor: pointer;
+}
+
+.pagination {
+    color: var(--denim-color);
+}
+
+.pagination .page-link {
+    color: #64748b !important; /* slate-500 */
+    border-color: #e2e8f0 !important; /* slate-200 */
+    background-color: #ffffff !important;
+    text-decoration: none;
+}
+.pagination .page-link:hover {
+    text-decoration: underline;
+    color: inherit !important;
+    background-color: transparent !important;
+    border-color: inherit !important;
+}
+
+.active>.page-link, .page-item.active .page-link, .pagination .page-item.active .page-link {
+    color: #fff !important;
+    background-color: var(--denim-color) !important;
+    border-color: var(--denim-color) !important;
+}
+
+.page-link:hover {
+    text-decoration: underline;
+    color: inherit !important;
+    background-color: transparent !important;
+    border-color: inherit !important;
+}
+
+.min {
+    white-space: nowrap;
+    width: 1%;
+}
+
+.text-bg-denim {
+    background-color: var(--denim-color);
+    color: var(--white);
+}
+
+/* Ensure badges with close buttons have vertically centered text */
+.badge.text-bg-denim {
+    display: inline-flex;
+    align-items: center;
+}
+
+.error {
+    border-color: var(--bs-red);
+}
+
+a.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  padding: 8px;
+  color: #64748b !important; /* slate-500 */
+  background: transparent !important;
+  text-decoration: none !important;
+}
+
+a.icon:hover {
+  text-decoration: none !important;
+  color: inherit !important;
+  background: transparent !important;
+}
+
+/* Delete icon colors per template */
+.a-icon-danger, a.icon.text-danger {
+  color: #64748b !important; /* slate-500 */
+}
+.a-icon-danger:hover, a.icon.text-danger:hover {
+  color: var(--blue-color) !important; /* blue */
+  background: transparent !important;
+}
+/* Final icon color rules to ensure template behavior */
+a.icon, a.icon i {
+  color: #64748b !important; /* neutral default */
+}
+a.icon:hover, a.icon:hover i {
+  color: inherit !important; /* keep the same color on hover */
+}
+
+
+/* Pagination hover for non-active links (prev/next and numbers) */
+.pagination .page-item:not(.disabled):not(.active) .page-link:hover {
+  text-decoration: underline;
+  color: inherit !important;
+  border-color: inherit !important;
+  background-color: transparent !important;
+}
+
+
+/* Smooth transitions for pagination */
+.pagination .page-link {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+
+/* Ensure breadcrumbs and page titles always render below header and above backgrounds */
+main > nav#breadcrumb,
+main > h3 {
+  position: relative;
+  z-index: 1;
+}
+
+/* Consistent spacing for page titles following breadcrumbs */
+main > h3 { margin-top: 0.25rem; }
+
+
+/* Global cursor pointer for interactive elements (non-intrusive, low specificity) */
+:where(
+  a[href],
+  button,
+  .btn,
+  [role="button"],
+  .dropdown-item,
+  .list-group-item-action,
+  .nav-link,
+  .page-link,
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"],
+  label[for],
+  [data-bs-toggle],
+  .stretched-link
+):not(.disabled):not([disabled]) {
+  cursor: pointer;
+}
+
+/* Ensure obvious non-clickable states are not shown as pointer */
+:where(
+  button[disabled],
+  .btn.disabled,
+  .dropdown-item.disabled,
+  .nav-link.disabled,
+  .page-item.disabled .page-link
+) {
+  cursor: default;
+}
+
+
+/* Ensure all text-primary and link-primary render in denim globally (does not change btn-primary backgrounds) */
+.text-primary,
+.link-primary {
+  color: var(--denim-color) !important;
+}
+
+/* Keep hover consistent with our anchor policy: underline only, color remains denim */
+a.text-primary:hover,
+a.link-primary:hover,
+a.text-primary:focus,
+a.link-primary:focus {
+  color: var(--denim-color) !important;
+  text-decoration: underline;
+}
+
+/* ========================================
+   Global Date Input Placeholder Hiding
+   ======================================== */
+
+/* Hide date input placeholder text when empty (no has-value class and not focused) */
+input[type="date"]:not(.has-value):not(:focus)::-webkit-datetime-edit {
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+input[type="date"]:not(.has-value):not(:focus)::-webkit-datetime-edit-text,
+input[type="date"]:not(.has-value):not(:focus)::-webkit-datetime-edit-month-field,
+input[type="date"]:not(.has-value):not(:focus)::-webkit-datetime-edit-day-field,
+input[type="date"]:not(.has-value):not(:focus)::-webkit-datetime-edit-year-field {
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+/* Show date text when focused or has value */
+input[type="date"]:focus::-webkit-datetime-edit,
+input[type="date"].has-value::-webkit-datetime-edit {
+  color: #212529 !important;
+  -webkit-text-fill-color: #212529 !important;
+}
+
+input[type="date"]:focus::-webkit-datetime-edit-text,
+input[type="date"]:focus::-webkit-datetime-edit-month-field,
+input[type="date"]:focus::-webkit-datetime-edit-day-field,
+input[type="date"]:focus::-webkit-datetime-edit-year-field,
+input[type="date"].has-value::-webkit-datetime-edit-text,
+input[type="date"].has-value::-webkit-datetime-edit-month-field,
+input[type="date"].has-value::-webkit-datetime-edit-day-field,
+input[type="date"].has-value::-webkit-datetime-edit-year-field {
+  color: #212529 !important;
+  -webkit-text-fill-color: #212529 !important;
+}
+
+/* Ensure calendar icon is still visible and clickable */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 1;
+}

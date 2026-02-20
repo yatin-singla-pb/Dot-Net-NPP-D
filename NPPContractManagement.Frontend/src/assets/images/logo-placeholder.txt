@@ -1,0 +1,9 @@
+# NPP Logo Placeholder
+
+Please replace this file with the actual NPP logo image:
+- Filename: npp_logo_denim.jpg
+- Format: JPG/JPEG
+- Recommended size: 200px width x 60px height
+- Color: Denim blue (#002D40) or similar brand color
+
+The login component expects the logo at: assets/images/npp_logo_denim.jpg
