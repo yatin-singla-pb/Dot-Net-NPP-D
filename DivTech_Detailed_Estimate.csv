@@ -1,0 +1,146 @@
+Phase,Category,Sub-Category,Task,Hours,Notes
+PHASE 1,Frontend,Project Setup,Angular project initialization & configuration,2,CLI setup routing modules services
+PHASE 1,Frontend,Project Setup,Shared components (header footer navigation),2,Reusable components
+PHASE 1,Frontend,Project Setup,Responsive layout framework setup,1,Bootstrap/Material setup
+PHASE 1,Frontend,Project Setup,HTTP client & API service setup,1,API integration layer
+PHASE 1,Frontend,Homepage,Hero slider component development,3,2 slides with text overlay animations
+PHASE 1,Frontend,Homepage,Services grid (6 cards),2,Cloud Computing IT Security Backup etc
+PHASE 1,Frontend,Homepage,Features section,1.5,Scalable Technology Security Performance
+PHASE 1,Frontend,Homepage,Latest Insight card component,1,Single blog preview card
+PHASE 1,Frontend,Homepage,Responsive styling & animations,1.5,Mobile tablet desktop
+PHASE 1,Frontend,About Page,Hero banner component,1,Simple banner with text
+PHASE 1,Frontend,About Page,Content sections layout,2,Who We Are FAQ sections
+PHASE 1,Frontend,About Page,Stats/metrics display with animations,1,Uptime percentages animated counters
+PHASE 1,Frontend,About Page,Responsive styling,1,Mobile optimization
+PHASE 1,Frontend,Solutions Page,Services listing & details,2,Cloud services descriptions
+PHASE 1,Frontend,Solutions Page,Content layout & cards,1.5,Text images icons
+PHASE 1,Frontend,Solutions Page,Responsive styling,1,Mobile optimization
+PHASE 1,Frontend,Insights/Blog Page,Blog listing layout with grid,2,Article cards grid pagination
+PHASE 1,Frontend,Insights/Blog Page,Single article view page,1.5,Article detail page
+PHASE 1,Frontend,Insights/Blog Page,Responsive styling,1,Mobile optimization
+PHASE 1,Frontend,Contact Page,Contact form UI development,2,Name email phone message fields
+PHASE 1,Frontend,Contact Page,Contact info display section,1,Address phone email map
+PHASE 1,Frontend,Contact Page,Client-side form validation,1,Validation rules error handling
+PHASE 1,Frontend,Contact Page,API integration for form submission,1,Submit form to backend
+PHASE 1,Frontend,Contact Page,Success/error messaging,0.5,Toast notifications
+PHASE 1,Frontend,Contact Page,Responsive styling,0.5,Mobile optimization
+PHASE 1,Frontend,Shared Components,Sliding sidebar development,1.5,Contact info sidebar
+PHASE 1,Frontend,Shared Components,Social media links integration,0.5,Twitter integration
+PHASE 1,Frontend,Design Improvements,Modern UI enhancements,3,Better colors spacing typography
+PHASE 1,Frontend,Design Improvements,Animations & transitions,2,Smooth scrolling hover effects
+PHASE 1,Frontend,Design Improvements,Icon integration,1,FontAwesome or similar
+PHASE 1,Frontend,Testing,Cross-browser testing,2,Chrome Firefox Safari Edge
+PHASE 1,Frontend,Testing,Mobile responsiveness testing,1.5,iOS Android tablets
+PHASE 1,Frontend,Testing,Form end-to-end testing,1,Contact form submission flow
+PHASE 1,Frontend,Content Migration,Copy existing content,2,Text images migration
+PHASE 1,Frontend,Content Migration,Image optimization,1,Compress optimize images
+PHASE 1,Backend,Project Setup,ASP.NET Core Web API project setup,2,Project structure configuration
+PHASE 1,Backend,Project Setup,Database setup (SQL Server),1.5,Database creation connection string
+PHASE 1,Backend,Project Setup,Entity Framework Core setup,1.5,DbContext models migrations
+PHASE 1,Backend,Database Design,Contact submissions table design,1,Table schema migration
+PHASE 1,Backend,Database Design,Blog/Insights table design,1.5,Articles table schema
+PHASE 1,Backend,API Development,Contact form submission endpoint,2,POST endpoint validation
+PHASE 1,Backend,API Development,Email service integration,2,SendGrid/SMTP email sending
+PHASE 1,Backend,API Development,Contact submissions CRUD endpoints,1.5,Admin endpoints to view submissions
+PHASE 1,Backend,API Development,Blog/Insights CRUD endpoints,3,GET POST PUT DELETE for articles
+PHASE 1,Backend,API Development,Error handling & logging,1.5,Global exception handling
+PHASE 1,Backend,API Development,CORS configuration,0.5,Allow frontend origin
+PHASE 1,Backend,Security,Input validation & sanitization,1.5,Prevent SQL injection XSS
+PHASE 1,Backend,Security,Rate limiting implementation,1,Prevent spam submissions
+PHASE 1,Backend,Testing,API endpoint testing,2,Postman/unit tests
+PHASE 1,Backend,Testing,Database operations testing,1,CRUD operations
+PHASE 1,Backend,Deployment,Backend deployment setup,2,Azure/AWS hosting configuration
+PHASE 1,Backend,Deployment,Database deployment,1,Production database setup
+PHASE 1,Frontend,Deployment,Production build optimization,1,Minification tree-shaking
+PHASE 1,Frontend,Deployment,Frontend hosting setup,1.5,Azure/AWS/Netlify deployment
+PHASE 1,Frontend,Deployment,Environment configuration,1,API URLs environment variables
+PHASE 1 SUBTOTAL,,,PHASE 1 TOTAL,75,
+,,,,,
+PHASE 2,Frontend,Authentication,Login page UI,2,Email password form
+PHASE 2,Frontend,Authentication,Registration page UI,2,User signup form
+PHASE 2,Frontend,Authentication,Forgot password UI,1.5,Password reset flow
+PHASE 2,Frontend,Authentication,Auth service & route guards,3,JWT token management route guards
+PHASE 2,Frontend,Authentication,User profile page,2,View/edit profile
+PHASE 2,Frontend,Dashboard,Client dashboard layout,3,Overview widgets cards
+PHASE 2,Frontend,Dashboard,Account summary component,2,Account details status
+PHASE 2,Frontend,Dashboard,Quick actions menu,1.5,Common tasks shortcuts
+PHASE 2,Frontend,Dashboard,Notifications center,2,Alerts messages
+PHASE 2,Frontend,Payables,Invoices listing page,3,Table with filters sorting pagination
+PHASE 2,Frontend,Payables,Invoice detail view,2,Line items totals taxes
+PHASE 2,Frontend,Payables,Payment history page,2,Past payments table
+PHASE 2,Frontend,Payables,Payment processing UI,3,Credit card ACH forms
+PHASE 2,Frontend,Payables,Payment confirmation page,1.5,Receipt download
+PHASE 2,Frontend,Documents,Document library listing,2,Files table with search filter
+PHASE 2,Frontend,Documents,Document viewer component,2,PDF viewer
+PHASE 2,Frontend,Documents,Document upload component,2,Drag-drop file upload
+PHASE 2,Frontend,Documents,Document categories/filters,1.5,Filter by type date category
+PHASE 2,Frontend,Support,Support ticket listing page,2,Tickets table with status
+PHASE 2,Frontend,Support,Create ticket form,2,Subject description attachments
+PHASE 2,Frontend,Support,Ticket detail view,3,Messages thread status updates
+PHASE 2,Frontend,Support,Ticket status tracking,1.5,Open in-progress closed
+PHASE 2,Frontend,Analytics,Usage analytics dashboard,3,Charts graphs metrics
+PHASE 2,Frontend,Analytics,Reports listing page,2,Available reports
+PHASE 2,Frontend,Analytics,Report viewer component,2,Display report data
+PHASE 2,Frontend,Analytics,Export functionality,1.5,PDF Excel export
+PHASE 2,Frontend,Shared Components,Client portal navigation,2,Sidebar menu
+PHASE 2,Frontend,Shared Components,Breadcrumbs component,1,Navigation breadcrumbs
+PHASE 2,Frontend,Shared Components,Loading states,1.5,Spinners skeletons
+PHASE 2,Frontend,Shared Components,Error pages,1,404 403 500 pages
+PHASE 2,Frontend,Testing,Authentication flow testing,2,Login logout registration
+PHASE 2,Frontend,Testing,Payment flow testing,2,End-to-end payment
+PHASE 2,Frontend,Testing,Document management testing,1.5,Upload download delete
+PHASE 2,Frontend,Testing,Support ticket testing,1.5,Create view update
+PHASE 2,Backend,Authentication,User registration endpoint,3,Create user hash password
+PHASE 2,Backend,Authentication,Login endpoint,2,Validate credentials return JWT
+PHASE 2,Backend,Authentication,Password reset endpoints,2,Reset token email flow
+PHASE 2,Backend,Authentication,JWT token validation middleware,2,Middleware authentication
+PHASE 2,Backend,Authentication,Refresh token logic,2,Token refresh endpoint
+PHASE 2,Backend,Database Design,Users table design,2,User schema roles permissions
+PHASE 2,Backend,Database Design,Invoices table design,2,Invoice schema relationships
+PHASE 2,Backend,Database Design,Payments table design,2,Payment records transactions
+PHASE 2,Backend,Database Design,Documents table design,1.5,File metadata storage
+PHASE 2,Backend,Database Design,Support tickets table design,2,Tickets messages schema
+PHASE 2,Backend,Database Design,Analytics/usage tracking table,1.5,Usage metrics logging
+PHASE 2,Backend,API Development,User management endpoints,3,CRUD for users
+PHASE 2,Backend,API Development,Invoice endpoints,3,GET invoices by user filter
+PHASE 2,Backend,API Development,Payment processing integration,5,Stripe/PayPal integration
+PHASE 2,Backend,API Development,Payment history endpoints,2,GET payment records
+PHASE 2,Backend,API Development,Document management endpoints,4,Upload download delete list
+PHASE 2,Backend,API Development,File storage integration,3,Azure Blob/S3 integration
+PHASE 2,Backend,API Development,Support ticket endpoints,4,CRUD for tickets messages
+PHASE 2,Backend,API Development,Analytics endpoints,3,Usage data aggregation
+PHASE 2,Backend,API Development,Report generation service,3,Generate PDF/Excel reports
+PHASE 2,Backend,Security,Role-based access control,3,Admin client roles permissions
+PHASE 2,Backend,Security,Data encryption,2,Sensitive data encryption at rest
+PHASE 2,Backend,Security,Audit logging,2,Track user actions changes
+PHASE 2,Backend,Security,Payment security (PCI compliance),3,Secure payment handling tokenization
+PHASE 2,Backend,Email Services,Welcome email template,1,New user registration email
+PHASE 2,Backend,Email Services,Invoice email notifications,1.5,Invoice generated/due emails
+PHASE 2,Backend,Email Services,Payment confirmation email,1.5,Payment receipt email
+PHASE 2,Backend,Email Services,Password reset email,1,Reset link email
+PHASE 2,Backend,Email Services,Support ticket notifications,1.5,Ticket update emails
+PHASE 2,Backend,Testing,Authentication testing,3,Login registration password reset
+PHASE 2,Backend,Testing,Payment integration testing,3,Payment processing flows
+PHASE 2,Backend,Testing,Document operations testing,2,Upload download operations
+PHASE 2,Backend,Testing,Support ticket testing,2,CRUD operations
+PHASE 2,Backend,Testing,Security testing,2,Authorization access control
+PHASE 2,Backend,Deployment,Database migrations,2,Production schema updates
+PHASE 2,Backend,Deployment,Payment gateway setup,2,Production payment credentials
+PHASE 2,Backend,Deployment,File storage setup,1.5,Production blob storage config
+PHASE 2,Backend,Deployment,Email service setup,1,Production email configuration
+PHASE 2,Frontend,Deployment,Production build,1.5,Optimized build
+PHASE 2,Frontend,Deployment,Environment setup,1,Production API URLs keys
+PHASE 2,Integration,End-to-End Testing,Full user workflow testing,5,Complete user journeys
+PHASE 2,Integration,End-to-End Testing,Performance testing,2,Load testing optimization
+PHASE 2,Integration,End-to-End Testing,Security penetration testing,3,Security vulnerability testing
+PHASE 2,Documentation,Technical Documentation,API documentation,3,Swagger/OpenAPI docs
+PHASE 2,Documentation,User Documentation,Client portal user guide,3,End-user manual
+PHASE 2,Documentation,Admin Documentation,Admin features guide,2,Admin user manual
+PHASE 2 SUBTOTAL,,,PHASE 2 TOTAL,180,
+,,,,,
+SUMMARY,,,,,
+Phase,Description,Hours,,,
+Phase 1,Informational Website with Backend,75,,,
+Phase 2,Client Portal with Full Features,180,,,
+,,,,,
+GRAND TOTAL,Complete Project (Both Phases),255,,,

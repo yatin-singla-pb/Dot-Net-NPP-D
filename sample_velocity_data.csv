@@ -1,0 +1,7 @@
+distributor_id,shipment_id,sku,quantity,shipped_at,origin,destination
+1,SH001,SKU123,50,2024-12-01T10:00:00Z,Warehouse A,Store B
+1,SH002,SKU456,25,2024-12-01T11:30:00Z,Warehouse A,Store C
+2,SH003,SKU789,100,2024-12-01T14:00:00Z,Warehouse B,Store D
+1,SH004,SKU123,75,2024-12-01T15:00:00Z,Warehouse A,Store E
+3,SH005,SKU999,30,2024-12-02T09:00:00Z,Warehouse C,Store F
+

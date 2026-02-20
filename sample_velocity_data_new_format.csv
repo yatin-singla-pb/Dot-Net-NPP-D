@@ -1,0 +1,7 @@
+OPCO,Customer #,Customer Name,Address One,Address Two,City,Zip Code,Invoice #,Invoice Date,Product #,Brand,Pack Size,Description,Corp Manuf #,GTIN,Manufacturer Name,Qty,Sales,Landed Cost,Allowances
+001,CUST001,ABC Restaurant,123 Main St,Suite 100,New York,10001,INV-2024-001,2024-12-01,PROD001,Brand A,12x500ml,Product Description,CORP001,1234567890123,Manufacturer A,50,1250.00,1000.00,50.00
+001,CUST002,XYZ Cafe,456 Oak Ave,,Los Angeles,90001,INV-2024-002,2024-12-01,PROD002,Brand B,24x250ml,Another Product,CORP002,9876543210987,Manufacturer B,100,2500.00,2000.00,100.00
+002,CUST003,Restaurant Group,789 Pine Rd,Building 5,Chicago,60601,INV-2024-003,2024-12-02,PROD003,Brand C,6x1L,Third Product,CORP003,5555555555555,Manufacturer C,25,750.00,600.00,30.00
+001,CUST004,Food Services Inc,321 Elm St,,Houston,77001,INV-2024-004,2024-12-02,PROD004,Brand D,48x125ml,Fourth Product,CORP004,4444444444444,Manufacturer D,75,1875.00,1500.00,75.00
+002,CUST005,Catering Co,654 Maple Dr,Floor 2,Phoenix,85001,INV-2024-005,2024-12-03,PROD005,Brand E,12x1L,Fifth Product,CORP005,3333333333333,Manufacturer E,30,900.00,720.00,36.00
+
