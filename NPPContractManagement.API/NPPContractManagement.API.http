@@ -1,0 +1,6 @@
+@NPPContractManagement.API_HostAddress = http://localhost:5110
+
+GET {{NPPContractManagement.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
