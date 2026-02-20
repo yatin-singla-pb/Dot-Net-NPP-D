@@ -1,0 +1,53 @@
+/* Industries List Component Styles - follow global NPP theme colors */
+
+/* Use global .btn-denim, .text-bg-denim, .fc-denim from npp-theme.css */
+
+/* Keep only component-specific utilities */
+.clickable { cursor: pointer; }
+
+.icon { text-decoration: none; }
+.icon:hover { opacity: 0.8; }
+
+.min { width: 1%; white-space: nowrap; }
+
+
+/* Icon colors to match template (scoped to this component) */
+.table .icon,
+.table .icon i {
+  color: var(--denim-color) !important; /* default denim */
+  transition: color 0.2s ease;
+}
+
+/* Circular hover for action icons */
+.table .icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+.table .icon:hover {
+  background-color: var(--blue-color) !important; /* rgb(87,168,204) */
+  color: #ffffff !important;
+}
+.table .icon:hover i {
+  color: #ffffff !important;
+}
+
+/* Hover: ensure icons become white over blue circular background */
+.table .icon:hover,
+.table .icon:hover i {
+  color: #ffffff !important;
+}
+
+/* Ensure delete link uses denim by default; also white on hover like edit */
+.table .icon.text-danger,
+.table .icon.text-danger i {
+  color: var(--denim-color) !important;
+}
+.table .icon.text-danger:hover,
+.table .icon.text-danger:hover i {
+  color: #ffffff !important;
+}

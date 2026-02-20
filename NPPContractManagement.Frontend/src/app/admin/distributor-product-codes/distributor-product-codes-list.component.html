@@ -1,0 +1,264 @@
+    <main class="container">
+      <nav aria-label="breadcrumb" id="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a routerLink="/admin">Administration</a></li>
+          <li class="breadcrumb-item active">Distributor Product Codes</li>
+        </ol>
+      </nav>
+
+      <div>
+        <h3>
+          <span>Distributor Product Codes</span>
+          <span>
+            <a routerLink="/admin/distributor-product-codes/create" class="fs-3 ms-2" title="Add new code">
+              <i class="fa-solid fa-plus"></i>
+            </a>
+          </span>
+        </h3>
+
+        <form>
+          <div class="d-flex flex-wrap align-items-end gap-3">
+            <div class="flex-fill me-2">
+              <input type="search" class="form-control"
+                     placeholder="Search by ID, product description, product code, or distributor code"
+                     [(ngModel)]="searchTerm" (input)="onSearchChange($any($event.target).value || '')" name="search">
+            </div>
+
+            <!-- Status Filter Buttons -->
+            <div class="btn-group me-2" role="group" aria-label="Filter by status">
+              <button type="button" class="btn status-filter-btn" [class.active]="statusFilter === 'Active'" (click)="onStatusFilterChange('Active')">Active</button>
+              <button type="button" class="btn status-filter-btn" [class.active]="statusFilter === 'Inactive'" (click)="onStatusFilterChange('Inactive')">Inactive</button>
+            </div>
+
+            <!-- Advanced Filters Toggle -->
+            <a href="#" class="fs-3 me-2" (click)="toggleAdvancedFilters(); $event.preventDefault()">
+              <i class="fa-solid fa-filter"></i>
+            </a>
+
+            <!-- Actions Dropdown -->
+            <div class="dropdown">
+              <a href="#" data-bs-toggle="dropdown" aria-expanded="false" class="fs-3">
+                <i class="fa-solid fa-bars"></i>
+              </a>
+              <ul class="dropdown-menu">
+                <li>
+                  <button type="button" class="dropdown-item" (click)="exportToExcel()" [disabled]="loading">
+                    <i class="fa-solid fa-download"></i> Export Results
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+          </div>
+
+          <!-- Filter Pills -->
+          <div class="d-flex flex-wrap mt-2">
+            <span *ngIf="statusFilter" class="badge text-bg-denim filter-pill clickable" (click)="onStatusFilterChange('')">
+              Status:&nbsp;{{statusFilter | titlecase}} ✕
+            </span>
+            <span *ngIf="searchTerm" class="badge text-bg-denim filter-pill clickable ms-2" (click)="onSearchChange('')">
+              Search: {{searchTerm}} ✕
+            </span>
+            <ng-container *ngFor="let did of selectedDistributorIds">
+              <span class="badge text-bg-denim filter-pill clickable ms-2" (click)="removeSelectedDistributor(did)">
+                Distributor: {{getDistributorName(did)}} ✕
+              </span>
+            </ng-container>
+            <ng-container *ngFor="let pid of selectedProductIds">
+              <span class="badge text-bg-denim filter-pill clickable ms-2" (click)="removeSelectedProduct(pid)">
+                Product: {{getProductName(pid)}} ✕
+              </span>
+            </ng-container>
+            <button *ngIf="selectedDistributorIds.length || selectedProductIds.length"
+                    type="button" class="badge text-bg-denim filter-pill clickable ms-2"
+                    (click)="clearAdvancedFilters()">
+              Clear Advanced Filters
+            </button>
+            <button *ngIf="statusFilter || searchTerm || selectedDistributorIds.length || selectedProductIds.length"
+                    type="button" class="badge text-bg-denim filter-pill clickable ms-2"
+                    (click)="clearAllFilters()">
+              Clear All Filters
+            </button>
+          </div>
+        </form>
+          <!-- Advanced Filters Modal -->
+          <div class="modal fade" [class.show]="showAdvancedFilters" [style.display]="showAdvancedFilters ? 'block' : 'none'">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h1 class="modal-title fs-5 fc-denim">Additional Filters</h1>
+                  <button type="button" class="btn-close" (click)="toggleAdvancedFilters()"></button>
+                </div>
+                <div class="modal-body">
+                  <div class="row g-3">
+                    <div class="col-md-6">
+                      <label class="form-label">Distributors</label>
+                      <div class="form-control p-2" (click)="toggleDistPanel()" tabindex="0">
+                        <span class="d-block text-truncate" [class.text-muted]="advDistributorIds.length === 0">{{ getAdvDistributorDisplay() }}</span>
+                      </div>
+                      <div class="position-relative">
+                        <div class="dropdown-menu d-block dropdown-panel w-100 p-2" *ngIf="showDistPanel">
+                          <input class="form-control mb-2" [value]="distributorQuery" (input)="applyDistributorFilter($any($event.target).value)">
+                          <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" [checked]="distSelectAllChecked" (change)="toggleAllDistributors($any($event.target).checked)" id="chkAllDist">
+                            <label class="form-check-label" for="chkAllDist">{{ distSelectAllChecked ? 'Unselect All' : 'Select All' }}</label>
+                          </div>
+                          <div style="max-height:240px; overflow:auto;">
+                            <div class="form-check" *ngFor="let d of filteredDistributors">
+                              <input class="form-check-input" type="checkbox" [checked]="advDistributorIds.includes(d.id)" (change)="onAdvancedToggle('distributor', d.id, $any($event.target).checked)">
+                              <label class="form-check-label">{{d.name}}</label>
+                            </div>
+                          </div>
+                          <div class="text-end mt-2">
+                            <button type="button" class="btn btn-sm btn-secondary me-2" (click)="showDistPanel=false">Close</button>
+                            <button type="button" class="btn btn-sm btn-denim" (click)="showDistPanel=false">Done</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Products</label>
+                      <div class="form-control p-2" (click)="toggleProdPanel()" tabindex="0">
+                        <span class="d-block text-truncate" [class.text-muted]="advProductIds.length === 0">{{ getAdvProductDisplay() }}</span>
+                      </div>
+                      <div class="position-relative">
+                        <div class="dropdown-menu d-block dropdown-panel w-100 p-2" *ngIf="showProdPanel">
+                          <input class="form-control mb-2" [value]="productQuery" (input)="applyProductFilter($any($event.target).value)">
+                          <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" [checked]="prodSelectAllChecked" (change)="toggleAllProducts($any($event.target).checked)" id="chkAllProd">
+                            <label class="form-check-label" for="chkAllProd">{{ prodSelectAllChecked ? 'Unselect All' : 'Select All' }}</label>
+                          </div>
+
+                          <div style="max-height:240px; overflow:auto;">
+                            <div class="form-check" *ngFor="let p of filteredProducts">
+                              <input class="form-check-input" type="checkbox" [checked]="advProductIds.includes(p.id)" (change)="onAdvancedToggle('product', p.id, $any($event.target).checked)">
+                              <label class="form-check-label">{{p.description}}</label>
+                            </div>
+                          </div>
+                          <div class="text-end mt-2">
+                            <button type="button" class="btn btn-sm btn-secondary me-2" (click)="showProdPanel=false">Close</button>
+                            <button type="button" class="btn btn-sm btn-denim" (click)="showProdPanel=false">Done</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-denim" (click)="clearAdvancedOnly()">Clear</button>
+                  <button type="button" class="btn btn-denim" (click)="applyAdvancedFilters()">Apply</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+      </div>
+
+      <div class="table-responsive mt-3" *ngIf="!loading && items.length > 0">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+          <tr>
+            <th (click)="onSort('id')" class="clickable">ID</th>
+            <th (click)="onSort('DistributorId')" class="clickable">Distributor</th>
+            <th (click)="onSort('DistributorCode')" class="clickable">Dist. Code</th>
+            <th (click)="onSort('ManufacturerProductCode')" class="clickable">Mfr Code</th>
+            <th (click)="onSort('ProductDescription')" class="clickable">Description</th>
+            <th (click)="onSort('Brand')" class="clickable">Brand</th>
+            <th (click)="onSort('ManufacturerName')" class="clickable">Manufacturer</th>
+            <th>Flags</th>
+            <th class="text-center">Actions</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let item of items">
+            <td>{{item.id}}</td>
+            <td>{{item.distributorName || item.distributorId}}</td>
+            <td>{{item.distributorCode}}</td>
+            <td>{{item.manufacturerProductCode || '-'}}</td>
+            <td>{{item.productDescription || item.productName || '-'}}</td>
+            <td>{{item.brand || '-'}}</td>
+            <td>{{item.manufacturerName || '-'}}</td>
+            <td>
+              <span *ngIf="item.catchWeight" class="badge bg-info me-1">Catch Weight</span>
+              <span *ngIf="item.eBrand" class="badge bg-secondary">E-Brand</span>
+            </td>
+            <td>
+              <div class="d-flex justify-content-center">
+                <a [routerLink]="['/admin/distributor-product-codes/view', item.id]" class="me-2 fs-6 icon" title="View Distributor Product Code">
+                  <i class="fa-solid fa-eye"></i>
+                </a>
+                <a href="#" class="fs-6 icon text-danger" (click)="openDeleteModal(item); $event.preventDefault()">
+                  <i class="fa-solid fa-trash-can"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+
+        <div class="d-flex flex-row-reverse mt-3">
+          <ul class="pagination">
+            <li class="page-item" [class.disabled]="pagination.currentPage === 1">
+              <a href="#" class="page-link" (click)="onPageChange(1); $event.preventDefault()">&lt;&lt;</a>
+            </li>
+            <li class="page-item" [class.disabled]="pagination.currentPage === 1">
+              <a href="#" class="page-link" (click)="onPageChange(pagination.currentPage - 1); $event.preventDefault()">&lt;</a>
+            </li>
+            <li *ngFor="let page of getPageNumbers()" class="page-item" [class.active]="page === pagination.currentPage" [class.disabled]="page === -1">
+              <a href="#" class="page-link" (click)="page !== -1 ? onPageChange(page) : null; $event.preventDefault()">{{page === -1 ? '...' : page}}</a>
+            </li>
+            <li class="page-item" [class.disabled]="pagination.currentPage === pagination.totalPages">
+              <a href="#" class="page-link" (click)="onPageChange(pagination.currentPage + 1); $event.preventDefault()">&gt;</a>
+            </li>
+            <li class="page-item" [class.disabled]="pagination.currentPage === pagination.totalPages">
+              <a href="#" class="page-link" (click)="onPageChange(pagination.totalPages); $event.preventDefault()">&gt;&gt;</a>
+            </li>
+          </ul>
+          <div class="me-5 align-self-center">
+            <ng-container *ngIf="pagination.totalItems > 0; else zeroRange">
+              <span>{{pagination.startIndex + 1}} to {{Math.min(pagination.endIndex + 1, pagination.totalItems)}} of {{pagination.totalItems}}</span>
+            </ng-container>
+            <ng-template #zeroRange><span>0 to 0 of 0</span></ng-template>
+          </div>
+          <div class="me-5 align-self-center">
+            <label class="form-label m-0" for="pageSize">Rows per page:</label>
+            <select class="m-0 p-0 border-top-0 border-start-0 border-end-0 border-bottom-1" [(ngModel)]="pagination.pageSize" [ngModelOptions]="{standalone: true}" (ngModelChange)="onPageSizeChange(+($event))" name="pageSize">
+              <option [ngValue]="5">5</option>
+              <option [ngValue]="10">10</option>
+              <option [ngValue]="20">20</option>
+              <option [ngValue]="50">50</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Delete Confirmation Modal -->
+        <div *ngIf="showDeleteModal" class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true">
+          <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Confirm Deletion</h5>
+                <button type="button" class="btn-close" aria-label="Close" (click)="closeDeleteModal()"></button>
+              </div>
+              <div class="modal-body">
+                <p>Are you sure you want to delete?</p>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-denim" (click)="closeDeleteModal()">Cancel</button>
+                <button type="button" class="btn btn-denim" (click)="confirmDelete()">Delete</button>
+
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Backdrop -->
+        <div *ngIf="showDeleteModal" class="modal-backdrop fade show"></div>
+      </div>
+
+      <!-- Empty state -->
+      <div *ngIf="!loading && items.length === 0" class="text-center my-5">
+        <p class="text-muted">No distributor product codes found.</p>
+        <a routerLink="/admin/distributor-product-codes/create" class="btn btn-denim">
+          <i class="fa-solid fa-plus me-2"></i>Add First Distributor Product Code
+        </a>
+      </div>
+    </main>

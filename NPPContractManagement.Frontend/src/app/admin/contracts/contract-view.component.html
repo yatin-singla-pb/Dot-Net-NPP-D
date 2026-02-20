@@ -1,0 +1,147 @@
+<main class="container">
+  <nav aria-label="breadcrumb" id="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a routerLink="/admin">Administration</a></li>
+      <li class="breadcrumb-item"><a routerLink="/admin/contracts">Contracts</a></li>
+      <li class="breadcrumb-item active">View</li>
+    </ol>
+  </nav>
+
+  <!-- subtle toast top-right when navigated from proposal -->
+  <div class="position-fixed top-0 end-0 p-3" style="z-index: 1060" *ngIf="showCreatedFromProposalToast">
+    <div class="toast show text-bg-denim" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body text-white">
+          Contract created from Proposal #{{createdFromProposalId}}.
+          <a [routerLink]="['/admin/proposals', createdFromProposalId]" class="text-white text-decoration-underline ms-1">View proposal</a>
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" aria-label="Close" (click)="closeCreatedFromProposalToast()"></button>
+      </div>
+    </div>
+  </div>
+  <!-- Action Toast (auto-dismiss) -->
+  <div class="position-fixed top-0 end-0 p-3" style="z-index: 1060" *ngIf="showActionToast">
+    <div class="toast show text-bg-denim" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body text-white">
+          {{actionToastMessage}}
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" aria-label="Close" (click)="closeActionToast()"></button>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="d-flex align-items-center justify-content-between mb-2">
+    <h3>Contract</h3>
+    <div class="d-flex align-items-center gap-2">
+      <button class="btn btn-denim" *ngIf="contract && !contract.isSuspended" (click)="openSuspendModal()" [disabled]="loading">Suspend</button>
+      <button class="btn btn-denim" *ngIf="contract?.isSuspended && isAdmin" (click)="openUnsuspendModal()" [disabled]="loading">Unsuspend</button>
+      <button class="btn btn-denim" (click)="onDuplicateAmend()" [disabled]="!contract">Duplicate/Amend</button>
+    </div>
+  </div>
+
+  <div *ngIf="error" class="alert alert-danger">{{error}}</div>
+  <div *ngIf="loading" class="text-center my-4">
+    <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>
+  </div>
+
+  <div class="row" *ngIf="contract">
+    <div class="col-md-3">
+      <div class="card">
+        <div class="card-header">Versions</div>
+        <ul class="list-group list-group-flush version-list">
+          <li *ngFor="let v of versions; trackBy: trackByVersion"
+              class="list-group-item d-flex justify-content-between align-items-center"
+              [class.active]="selectedVersion?.id === v.id"
+              (click)="selectVersion(v)">
+            v{{v.versionNumber}}
+            <span class="badge bg-secondary" *ngIf="contract?.currentVersionNumber === v.versionNumber">current</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="col-md-9">
+      <app-contract-form [readonlyMode]="true" [value]="contract" [versionOverride]="selectedVersion" (duplicateAmend)="onDuplicateAmend()"></app-contract-form>
+      <app-contract-assignments [readonlyMode]="true"></app-contract-assignments>
+
+
+      <div class="card mt-3" *ngIf="selectedVersion">
+        <div class="card-header">Prices (v{{selectedVersion.versionNumber}})</div>
+        <div class="table-responsive" style="max-height: 360px; overflow: auto;">
+          <table class="table table-sm align-middle">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Price</th>
+                <th>Type</th>
+                <th>UOM</th>
+                <th>Tier</th>
+                <th>Effective From</th>
+                <th>Effective To</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let p of selectedVersion.prices">
+                <td>{{p.productName || p.productId}}</td>
+                <td>{{p.price ?? '-'}}</td>
+                <td>{{p.priceType || '-'}}</td>
+                <td>{{p.uom || '-'}}</td>
+                <td>{{p.tier || '-'}}</td>
+
+                <td>{{p.effectiveFrom ? (p.effectiveFrom | date:'shortDate') : '-'}}</td>
+                <td>{{p.effectiveTo ? (p.effectiveTo | date:'shortDate') : '-'}}</td>
+              </tr>
+              <tr *ngIf="!selectedVersion.prices || selectedVersion.prices.length === 0">
+                <td colspan="7" class="text-center text-muted">No prices</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Suspend Confirmation Modal -->
+  <div *ngIf="showSuspendModal" class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Confirm Suspend</h5>
+          <button type="button" class="btn-close" aria-label="Close" (click)="closeSuspendModal()"></button>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to suspend this contract? This will set Is Suspended and record today as Suspended Date.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-denim" (click)="closeSuspendModal()">Cancel</button>
+          <button type="button" class="btn btn-denim" (click)="confirmSuspend()">Suspend</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Backdrop -->
+  <div *ngIf="showSuspendModal" class="modal-backdrop fade show"></div>
+
+  <!-- Unsuspend Confirmation Modal -->
+  <div *ngIf="showUnsuspendModal" class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Confirm Unsuspend</h5>
+          <button type="button" class="btn-close" aria-label="Close" (click)="closeUnsuspendModal()"></button>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to unsuspend this contract?</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-denim" (click)="closeUnsuspendModal()">Cancel</button>
+          <button type="button" class="btn btn-denim" (click)="confirmUnsuspend()">Unsuspend</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Backdrop -->
+  <div *ngIf="showUnsuspendModal" class="modal-backdrop fade show"></div>
+
+</main>
+

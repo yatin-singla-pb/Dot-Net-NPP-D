@@ -1,0 +1,85 @@
+/* Member Accounts List Component Styles */
+
+.btn-denim {
+  background-color: var(--denim-color);
+  border-color: var(--denim-color);
+  color: white;
+}
+
+.btn-denim:hover {
+  background-color: rgba(0, 45, 64, 0.9);
+  border-color: rgba(0, 45, 64, 0.9);
+  color: white;
+}
+
+.btn-denim.active {
+  background-color: var(--denim-color);
+  border-color: var(--denim-color);
+  color: white;
+}
+
+.text-bg-denim {
+  background-color: var(--denim-color) !important;
+  color: white !important;
+}
+
+.fc-denim {
+  color: var(--denim-color);
+}
+
+.table-denim th {
+  background-color: var(--denim-color);
+  color: white;
+  border-color: var(--denim-color);
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.icon {
+  text-decoration: none;
+}
+
+.icon:hover {
+  opacity: 0.8;
+}
+
+.min {
+  width: 1%;
+  white-space: nowrap;
+}
+
+
+/* Icon colors to match template */
+.table .icon,
+.table .icon i {
+  color: var(--denim-color) !important;
+  transition: color 0.2s ease;
+}
+
+.table .icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+.table .icon:hover {
+  background-color: var(--blue-color) !important;
+  color: #ffffff !important;
+}
+.table .icon:hover i {
+  color: #ffffff !important;
+}
+
+.table .icon.text-danger,
+.table .icon.text-danger i {
+  color: var(--denim-color) !important;
+}
+.table .icon.text-danger:hover,
+.table .icon.text-danger:hover i {
+  color: #ffffff !important;
+}

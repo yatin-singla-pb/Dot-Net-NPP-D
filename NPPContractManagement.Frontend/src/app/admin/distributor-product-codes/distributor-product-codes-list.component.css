@@ -1,0 +1,65 @@
+/* Match Industries list icon styling exactly */
+/* Use global .btn-denim, .text-bg-denim, .fc-denim from npp-theme.css */
+
+/* Top spacing now governed globally; removed page-specific negative margin */
+
+/* Component utilities */
+/* Breadcrumb inherits global spacing */
+
+.clickable { cursor: pointer; }
+#breadcrumb { position: relative; z-index: 2; }
+
+.icon { text-decoration: none; }
+.icon:hover { opacity: 0.8; }
+
+.min { width: 1%; white-space: nowrap; }
+
+/* Icon colors to match template (scoped) */
+.table .icon,
+.table .icon i {
+  color: var(--denim-color) !important;
+  transition: color 0.2s ease;
+}
+
+/* Circular hover for action icons */
+.table .icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+.table .icon:hover {
+  background-color: var(--blue-color) !important;
+  color: #ffffff !important;
+}
+.table .icon:hover i {
+  color: #ffffff !important;
+}
+
+/* Ensure delete link uses denim by default; also white on hover like edit */
+.table .icon.text-danger,
+.table .icon.text-danger i {
+  color: var(--denim-color) !important;
+}
+.table .icon.text-danger:hover,
+.table .icon.text-danger:hover i {
+  color: #ffffff !important;
+}
+
+
+/* Dropdown panels inside Advanced Filters modal should expand modal height */
+.dropdown-panel {
+  position: static !important; /* let it participate in layout */
+  display: block !important;
+  width: 100% !important;
+  box-shadow: none !important;
+  border: 1px solid var(--bs-border-color) !important;
+  border-radius: 0.375rem;
+  max-height: none; /* height driven by content */
+}
+.dropdown-panel .form-check {
+  margin-bottom: 0.25rem;
+}

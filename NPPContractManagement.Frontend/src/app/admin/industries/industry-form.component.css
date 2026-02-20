@@ -1,0 +1,67 @@
+/* Industry Form Component Styles */
+
+/* Ensure page content sits below fixed header and stays above background elements */
+:host { display: block; }
+
+/* Breadcrumb and page title should always appear above any background header area */
+#breadcrumb, h3 {
+  position: relative;
+  z-index: 1;
+}
+
+/* Consistent spacing for heading following breadcrumb */
+h3 {
+  margin-top: 0.25rem;
+}
+
+.btn-denim {
+  background-color: var(--denim-color);
+  border-color: var(--denim-color);
+  color: white;
+}
+
+.btn-denim:hover {
+  background-color: rgba(0, 45, 64, 0.9);
+  border-color: rgba(0, 45, 64, 0.9);
+  color: white;
+}
+
+.btn-denim:disabled {
+  background-color: rgba(0, 45, 64, 0.6);
+  border-color: rgba(0, 45, 64, 0.6);
+}
+
+.fc-denim {
+  color: var(--denim-color);
+}
+
+.form-control:focus {
+  border-color: var(--denim-color);
+  box-shadow: 0 0 0 0.2rem rgba(0, 45, 64, 0.25);
+}
+
+.form-select:focus {
+  border-color: var(--denim-color);
+  box-shadow: 0 0 0 0.2rem rgba(0, 45, 64, 0.25);
+}
+
+.is-invalid {
+  border-color: #dc3545;
+}
+
+.invalid-feedback {
+  color: #dc3545;
+}
+
+.text-danger {
+  color: #dc3545 !important;
+}
+
+.text-success {
+  color: #198754 !important;
+}
+
+.spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+}

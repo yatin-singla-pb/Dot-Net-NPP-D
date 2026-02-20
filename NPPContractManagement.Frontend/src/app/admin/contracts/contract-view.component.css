@@ -1,0 +1,4 @@
+.version-list .list-group-item { cursor: pointer; }
+.version-list .list-group-item.active { background-color: #002d40; color: #fff; }
+.btn-denim { background-color: #002d40; color: #fff; }
+

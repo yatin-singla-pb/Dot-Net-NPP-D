@@ -1,0 +1,297 @@
+    <main class="container">
+      <!-- Breadcrumb -->
+      <nav aria-label="breadcrumb" id="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a routerLink="/admin">Administration</a></li>
+          <li class="breadcrumb-item active">Industries</li>
+        </ol>
+      </nav>
+
+      <!-- Header -->
+      <div>
+        <h3>
+          <span>Industries</span>
+          <span>
+            <a routerLink="/admin/industries/create" class="fs-3 ms-2" title="Add new industry">
+              <i class="fa-solid fa-plus"></i>
+            </a>
+          </span>
+        </h3>
+
+        <!-- Search and Filters -->
+        <form>
+          <div class="d-flex">
+            <!-- Search Input -->
+            <input
+              type="search"
+              class="form-control flex-fill me-2"
+              placeholder="Search by ID or name"
+              [(ngModel)]="searchTerm"
+              (input)="onSearchChange($any($event.target).value || '')"
+              name="search">
+
+            <!-- Status Filter Buttons -->
+            <div class="btn-group me-2" role="group" aria-label="Filter by status">
+              <button
+                type="button"
+                class="btn status-filter-btn"
+                [class.active]="statusFilter === 'Active'"
+                (click)="onStatusFilterChange('Active')">
+                Active
+              </button>
+              <button
+                type="button"
+                class="btn status-filter-btn"
+                [class.active]="statusFilter === 'Inactive'"
+                (click)="onStatusFilterChange('Inactive')">
+                Inactive
+              </button>
+              <button
+                type="button"
+                class="btn status-filter-btn"
+                [class.active]="statusFilter === 'Pending'"
+                (click)="onStatusFilterChange('Pending')">
+                Pending
+              </button>
+            </div>
+
+            <!-- Advanced Filters Toggle -->
+            <!-- <a href="#" class="fs-3 me-2" data-bs-toggle="modal" data-bs-target="#ext-filter-modal">
+              <i class="fa-solid fa-filter"></i>
+            </a> -->
+
+            <!-- Actions Dropdown -->
+            <div class="dropdown">
+              <a href="#" data-bs-toggle="dropdown" aria-expanded="false" class="fs-3">
+                <i class="fa-solid fa-bars"></i>
+              </a>
+              <ul class="dropdown-menu">
+                <!-- <li>
+                  <button
+                    type="button"
+                    class="dropdown-item"
+                    (click)="deleteSelected()"
+                    [disabled]="selectedItems.size === 0">
+                    <i class="fa-solid fa-trash-can"></i> Delete Selected
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    class="dropdown-item">
+                    <i class="fa-solid fa-pen"></i> Batch Operation
+                  </button>
+                </li> -->
+                <li>
+                  <button
+                    type="button"
+                    class="dropdown-item"
+                    (click)="exportToExcel()"
+                    [disabled]="loading">
+                    <i class="fa-solid fa-download"></i> Export Results
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Filter Pills -->
+          <div class="d-flex mt-2">
+            <span
+              *ngIf="statusFilter"
+              class="badge text-bg-denim filter-pill clickable"
+              (click)="onStatusFilterChange('')">
+              Status:&nbsp;{{statusFilter | titlecase}} ✕
+            </span>
+            <span
+              *ngIf="searchTerm"
+              class="badge text-bg-denim filter-pill clickable ms-2"
+              (click)="onSearchChange('')">
+              Search: {{searchTerm}} ✕
+            </span>
+            <button
+              *ngIf="statusFilter || searchTerm"
+              type="button"
+              class="badge text-bg-denim filter-pill clickable ms-2"
+              (click)="clearAllFilters()">
+              Clear All Filters
+            </button>
+          </div>
+
+          <!-- Advanced Filters Modal -->
+          <div class="modal fade" id="ext-filter-modal">
+            <div class="modal-dialog modal-dialog-scrollable">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h1 class="modal-title fs-5 fc-denim">Additional Filters</h1>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  Add any additional filters that may be the user may find useful.
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-denim" data-bs-dismiss="modal">Close</button>
+                  <button type="button" class="btn btn-denim">Apply Filters</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+
+        <!-- Loading Indicator -->
+        <div *ngIf="loading" class="text-center my-4">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+
+        <!-- Error Message -->
+        <div *ngIf="error" class="alert alert-danger mt-3">
+          {{error}}
+        </div>
+
+        <!-- Data Table -->
+        <div class="table-responsive mt-3" *ngIf="!loading">
+          <table class="table">
+            <thead>
+              <tr>
+                <th style="cursor: pointer;" (click)="onSort('id')">
+                  ID
+                  <i class="fa-solid ms-1"
+                     [class.fa-sort]="sortBy !== 'id'"
+                     [class.fa-sort-up]="sortBy === 'id' && sortDirection === 'asc'"
+                     [class.fa-sort-down]="sortBy === 'id' && sortDirection === 'desc'"></i>
+                </th>
+                <th style="cursor: pointer;" (click)="onSort('name')">
+                  Industry Name
+                  <i class="fa-solid ms-1"
+                     [class.fa-sort]="sortBy !== 'name'"
+                     [class.fa-sort-up]="sortBy === 'name' && sortDirection === 'asc'"
+                     [class.fa-sort-down]="sortBy === 'name' && sortDirection === 'desc'"></i>
+                </th>
+                <th style="cursor: pointer;" (click)="onSort('status')">
+                  Status
+                  <i class="fa-solid ms-1"
+                     [class.fa-sort]="sortBy !== 'status'"
+                     [class.fa-sort-up]="sortBy === 'status' && sortDirection === 'asc'"
+                     [class.fa-sort-down]="sortBy === 'status' && sortDirection === 'desc'"></i>
+                </th>
+                <th class="text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of paginatedItems">
+                <td>{{item.id}}</td>
+                <td>{{item.name}}</td>
+                <td>
+                  <span
+                    class="badge"
+                    [class.bg-success]="item.status === IndustryStatus.Active"
+                    [class.bg-danger]="item.status === IndustryStatus.Inactive"
+                    [class.bg-warning]="item.status === IndustryStatus.Pending">
+                    {{item.status}}
+                  </span>
+                </td>
+                <td>
+                  <div class="d-flex justify-content-center">
+                    <a
+                      [routerLink]="['/admin/industries/view', item.id]"
+                      class="me-2 fs-6 icon"
+                      title="View Industry">
+                      <i class="fa-solid fa-eye"></i>
+                    </a>
+                    <a
+                      href="#"
+                      class="fs-6 icon text-danger"
+                      (click)="openDeleteModal(item); $event.preventDefault()">
+                      <i class="fa-solid fa-trash-can"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="d-flex flex-row-reverse mt-3" *ngIf="!loading && paginatedItems.length > 0">
+          <ul class="pagination">
+            <li class="page-item" [class.disabled]="pagination.currentPage === 1">
+              <a href="#" class="page-link" (click)="onPageChange(1); $event.preventDefault()">&lt;&lt;</a>
+            </li>
+            <li class="page-item" [class.disabled]="pagination.currentPage === 1">
+              <a href="#" class="page-link" (click)="onPageChange(pagination.currentPage - 1); $event.preventDefault()">&lt;</a>
+            </li>
+            <li
+              *ngFor="let page of getPageNumbers()"
+              class="page-item"
+              [class.active]="page === pagination.currentPage"
+              [class.disabled]="page === -1">
+              <a
+                href="#"
+                class="page-link"
+                (click)="page !== -1 ? onPageChange(page) : null; $event.preventDefault()">
+                {{page === -1 ? '...' : page}}
+              </a>
+            </li>
+            <li class="page-item" [class.disabled]="pagination.currentPage === pagination.totalPages">
+              <a href="#" class="page-link" (click)="onPageChange(pagination.currentPage + 1); $event.preventDefault()">&gt;</a>
+            </li>
+            <li class="page-item" [class.disabled]="pagination.currentPage === pagination.totalPages">
+              <a href="#" class="page-link" (click)="onPageChange(pagination.totalPages); $event.preventDefault()">&gt;&gt;</a>
+            </li>
+          </ul>
+
+          <div class="me-5 align-self-center">
+            <span>{{pagination.startIndex + 1}} to {{Math.min(pagination.endIndex + 1, pagination.totalItems)}} of {{pagination.totalItems}}</span>
+          </div>
+
+          <div class="me-5 align-self-center">
+            <label class="form-label m-0" for="pageSize">Rows per page:</label>
+            <select
+              class="m-0 p-0 border-top-0 border-start-0 border-end-0 border-bottom-1"
+              [(ngModel)]="pagination.pageSize"
+              [ngModelOptions]="{standalone: true}"
+              (ngModelChange)="onPageSizeChange(+($event))"
+              name="pageSize">
+              <option [ngValue]="1">1</option>
+              <option [ngValue]="2">2</option>
+              <option [ngValue]="5">5</option>
+              <option [ngValue]="10">10</option>
+              <option [ngValue]="20">20</option>
+              <option [ngValue]="50">50</option>
+              <option [ngValue]="100">100</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- No Data Message -->
+        <div *ngIf="!loading && paginatedItems.length === 0" class="text-center my-5">
+          <p class="text-muted">No industries found.</p>
+          <a routerLink="/admin/industries/create" class="btn btn-denim">
+            <i class="fa-solid fa-plus me-2"></i>Add First Industry
+          </a>
+        </div>
+      </div>
+
+      <!-- Delete Confirmation Modal -->
+      <div *ngIf="showDeleteModal" class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Confirm Deletion</h5>
+              <button type="button" class="btn-close" aria-label="Close" (click)="closeDeleteModal()"></button>
+            </div>
+            <div class="modal-body">
+              <p>Are you sure you want to delete?</p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-denim" (click)="closeDeleteModal()">Cancel</button>
+              <button type="button" class="btn btn-denim" (click)="confirmDelete()">Delete</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Backdrop -->
+      <div *ngIf="showDeleteModal" class="modal-backdrop fade show"></div>
+    </main>

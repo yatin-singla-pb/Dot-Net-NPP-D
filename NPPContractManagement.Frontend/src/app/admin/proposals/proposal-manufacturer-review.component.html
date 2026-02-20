@@ -1,0 +1,253 @@
+<div class="container py-3">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="m-0">Manufacturer Review</h2>
+    <a routerLink="/admin/proposals" class="btn btn-secondary">
+      <i class="fas fa-arrow-left me-2"></i>Back to Proposals
+    </a>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2">Loading proposal details...</p>
+  </div>
+
+  <!-- Error Alert -->
+  <div *ngIf="error" class="alert alert-danger" role="alert">
+    <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
+  </div>
+
+  <!-- Proposal Details -->
+  <div *ngIf="!loading && proposal && canAccessProposal()">
+    <div class="row">
+      <div class="col-lg-8">
+        <!-- Basic Information -->
+        <div class="card mb-4">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Proposal Information</h5>
+            <span class="badge fs-6" [class]="getStatusBadgeClass(proposal.proposalStatusId)">
+              {{ getProposalStatusName(proposal.proposalStatusId) }}
+            </span>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label fw-bold">Title</label>
+                <p class="mb-0">{{ proposal.title }}</p>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label fw-bold">Type</label>
+                <p class="mb-0">{{ getProposalTypeName(proposal.proposalTypeId) }}</p>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label fw-bold">ID</label>
+                <p class="mb-0">#{{ proposal.id }}</p>
+              </div>
+              <div class="col-md-6" *ngIf="proposal.manufacturerId">
+                <label class="form-label fw-bold">Manufacturer</label>
+                <p class="mb-0">{{ getManufacturerName(proposal.manufacturerId) }}</p>
+              </div>
+              <div class="col-md-3" *ngIf="proposal.startDate">
+                <label class="form-label fw-bold">Start Date</label>
+                <p class="mb-0">{{ formatDate(proposal.startDate) }}</p>
+              </div>
+              <div class="col-md-3" *ngIf="proposal.endDate">
+                <label class="form-label fw-bold">End Date</label>
+                <p class="mb-0">{{ formatDate(proposal.endDate) }}</p>
+              </div>
+              <div class="col-12" *ngIf="proposal.internalNotes">
+                <label class="form-label fw-bold">Internal Notes</label>
+                <p class="mb-0">{{ proposal.internalNotes }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Manufacturer Products -->
+        <div class="card mb-4">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Your Products ({{ getManufacturerProducts().length }})</h5>
+            <div class="text-end">
+              <small class="text-muted">Total Value: </small>
+              <strong>{{ formatCurrency(getTotalProposedValue()) }}</strong>
+            </div>
+          </div>
+          <div class="card-body">
+            <div *ngIf="getManufacturerProducts().length === 0" class="text-center py-4 text-muted">
+              <i class="fas fa-box-open fa-2x mb-2"></i>
+              <p>No products from your manufacturer in this proposal.</p>
+            </div>
+
+            <div class="table-responsive" *ngIf="getManufacturerProducts().length > 0">
+              <table class="table table-hover">
+                <thead class="table-light">
+                  <tr>
+                    <th>Product</th>
+                    <th>Price Type</th>
+                    <th>Unit Price</th>
+                    <th>Quantity</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let product of getManufacturerProducts()">
+                    <td>
+                      <strong>{{ getProductName(product.productId) }}</strong>
+                    </td>
+                    <td>
+                      <span *ngIf="product.priceTypeId">{{ getPriceTypeName(product.priceTypeId) }}</span>
+                      <span *ngIf="!product.priceTypeId" class="text-muted">Not set</span>
+                    </td>
+                    <td>{{ formatCurrency(getDisplayPrice(product)) }}</td>
+                    <td>
+                      <span *ngIf="product.quantity">{{ product.quantity }}</span>
+                      <span *ngIf="!product.quantity" class="text-muted">Not set</span>
+                    </td>
+                    <td>
+                      <strong *ngIf="getDisplayPrice(product) && product.quantity">
+                        {{ formatCurrency(((getDisplayPrice(product) || 0) * product.quantity)) }}
+                      </strong>
+                      <span *ngIf="!getDisplayPrice(product) || !product.quantity" class="text-muted">-</span>
+                    </td>
+                    <td>
+                      <span *ngIf="product.productProposalStatusId" 
+                            class="badge bg-secondary">
+                        {{ getProductProposalStatusName(product.productProposalStatusId) }}
+                      </span>
+                      <span *ngIf="!product.productProposalStatusId" class="text-muted">Not set</span>
+                    </td>
+
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- All Products (for reference) -->
+        <div class="card mb-4" *ngIf="proposal.products.length > getManufacturerProducts().length">
+          <div class="card-header">
+            <h5 class="mb-0">All Products in Proposal ({{ proposal.products.length }})</h5>
+            <small class="text-muted">Products from other manufacturers are shown for reference only</small>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead class="table-light">
+                  <tr>
+                    <th>Product</th>
+                    <th>Unit Price</th>
+                    <th>Quantity</th>
+                    <th>Total</th>
+                    <th>Your Product</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let product of proposal.products"
+                      [class.table-primary]="isManufacturerProduct(product.productId)">
+                    <td>{{ getProductName(product.productId) }}</td>
+                    <td>{{ formatCurrency(getDisplayPrice(product)) }}</td>
+                    <td>{{ product.quantity || '-' }}</td>
+                    <td>
+                      <span *ngIf="getDisplayPrice(product) && product.quantity">
+                        {{ formatCurrency(((getDisplayPrice(product) || 0) * product.quantity)) }}
+                      </span>
+                      <span *ngIf="!getDisplayPrice(product) || !product.quantity">-</span>
+                    </td>
+                    <td>
+                      <span *ngIf="isManufacturerProduct(product.productId)"
+                            class="badge bg-primary">Yes</span>
+                      <span *ngIf="!isManufacturerProduct(product.productId)"
+                            class="text-muted">No</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="col-lg-4">
+        <!-- Actions -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0">Manufacturer Actions</h5>
+          </div>
+          <div class="card-body">
+            <div class="alert alert-info" role="alert">
+              <i class="fas fa-info-circle me-2"></i>
+              <strong>Review Instructions:</strong> 
+              Review the products from your manufacturer and use the actions below to save your progress or submit the proposal.
+            </div>
+
+            <div class="d-grid gap-2">
+              <button 
+                type="button" 
+                class="btn btn-secondary" 
+                (click)="onSave()" 
+                [disabled]="!canSave() || submitting">
+                <span *ngIf="submitting" class="spinner-border spinner-border-sm me-2"></span>
+                <i *ngIf="!submitting" class="fas fa-save me-2"></i>
+                {{ submitting ? 'Saving...' : 'Save Progress' }}
+              </button>
+              
+              <button 
+                type="button" 
+                class="btn btn-primary" 
+                (click)="onSubmit()" 
+                [disabled]="!canSubmit() || submitting">
+                <span *ngIf="submitting" class="spinner-border spinner-border-sm me-2"></span>
+                <i *ngIf="!submitting" class="fas fa-paper-plane me-2"></i>
+                {{ submitting ? 'Submitting...' : 'Submit Proposal' }}
+              </button>
+            </div>
+
+            <hr>
+
+            <div class="text-center">
+              <small class="text-muted">
+                Status: <strong>{{ getProposalStatusName(proposal.proposalStatusId) }}</strong>
+              </small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Summary -->
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">Summary</h5>
+          </div>
+          <div class="card-body">
+            <div class="row text-center">
+              <div class="col-6">
+                <div class="border-end">
+                  <h4 class="text-primary mb-0">{{ getManufacturerProducts().length }}</h4>
+                  <small class="text-muted">Your Products</small>
+                </div>
+              </div>
+              <div class="col-6">
+                <h4 class="text-success mb-0">{{ formatCurrency(getTotalProposedValue()) }}</h4>
+                <small class="text-muted">Total Value</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Access Denied -->
+  <div *ngIf="!loading && proposal && !canAccessProposal()" class="text-center py-5">
+    <i class="fas fa-lock fa-3x text-muted mb-3"></i>
+    <h4>Access Denied</h4>
+    <p class="text-muted">You do not have permission to review this proposal.</p>
+    <a routerLink="/admin/proposals" class="btn btn-primary">
+      <i class="fas fa-arrow-left me-2"></i>Back to Proposals
+    </a>
+  </div>
+</div>

@@ -1,0 +1,217 @@
+  <main class="container">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" id="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a routerLink="/admin">Administration</a></li>
+        <li class="breadcrumb-item"><a routerLink="/admin/op-cos">Op-Cos</a></li>
+        <li class="breadcrumb-item active">{{isViewMode ? 'View' : (isEditMode ? 'Update' : 'Create')}}</li>
+      </ol>
+    </nav>
+
+    <!-- Header -->
+    <h3>{{isViewMode ? 'View' : (isEditMode ? 'Update' : 'Create')}} Op-Co</h3>
+
+    <!-- Loading Indicator -->
+    <div *ngIf="loading" class="text-center my-4">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+
+    <!-- Error Message -->
+    <div *ngIf="error" class="alert alert-danger">{{error}}</div>
+
+    <!-- Success Message -->
+    <div *ngIf="successMessage" class="alert alert-success">{{successMessage}}</div>
+
+    <!-- Form -->
+    <div class="row justify-content-center" *ngIf="!loading">
+      <div class="col-6">
+        <form [formGroup]="form" (ngSubmit)="onSubmit()">
+
+          <!-- Id (Read-only, shown only in edit/view mode) -->
+          <div class="mb-3" *ngIf="isEditMode || isViewMode">
+            <label for="id" class="form-label">Id</label>
+            <input
+              type="text"
+              class="form-control"
+              id="id"
+              [value]="opco?.id"
+              readonly
+              disabled>
+          </div>
+
+          <!-- Name -->
+          <div class="mb-3">
+            <label for="name" class="form-label">Opco Name <span class="text-danger">*</span></label>
+            <input id="name" type="text" class="form-control" [class.is-invalid]="isFieldInvalid('name')" formControlName="name" maxlength="200" />
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('name')">
+              <div *ngIf="form.get('name')?.errors?.['required']">Name is required.</div>
+              <div *ngIf="form.get('name')?.errors?.['minlength']">Name must be at least 2 characters.</div>
+              <div *ngIf="form.get('name')?.errors?.['maxlength']">Name cannot exceed 200 characters.</div>
+            </div>
+          </div>
+
+          <!-- Remote Reference Code -->
+          <div class="mb-3">
+            <label for="remoteReferenceCode" class="form-label">Remote Reference Code <span class="text-danger">*</span></label>
+            <input id="remoteReferenceCode" type="text" class="form-control" [class.is-invalid]="isFieldInvalid('remoteReferenceCode') || remoteCodeValidationError" formControlName="remoteReferenceCode" maxlength="100" />
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('remoteReferenceCode') || remoteCodeValidationError">
+              <div *ngIf="form.get('remoteReferenceCode')?.errors?.['required']">Code is required.</div>
+              <div *ngIf="form.get('remoteReferenceCode')?.errors?.['maxlength']">Code cannot exceed 100 characters.</div>
+              <div *ngIf="remoteCodeValidationError">{{remoteCodeValidationError}}</div>
+            </div>
+          </div>
+
+          <!-- Distributor -->
+          <div class="mb-3">
+            <label for="distributorId" class="form-label">Distributor <span class="text-danger">*</span></label>
+            <select id="distributorId" class="form-select" [class.is-invalid]="isFieldInvalid('distributorId')" formControlName="distributorId">
+              <option [ngValue]="null">Select distributor</option>
+              <option *ngFor="let d of distributors" [ngValue]="d.id">{{d.name}}</option>
+            </select>
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('distributorId')">
+              Distributor is required.
+            </div>
+          </div>
+
+          <!-- Contact Person -->
+          <div class="mb-3">
+            <label for="contactPerson" class="form-label">Contact Person</label>
+            <input id="contactPerson" type="text" class="form-control" formControlName="contactPerson" maxlength="200" />
+          </div>
+
+          <!-- Email field hidden per user request -->
+          <!-- <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input id="email" type="email" class="form-control" [class.is-invalid]="isFieldInvalid('email')" formControlName="email" maxlength="255" placeholder="name@example.com" />
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('email')">Enter a valid email address.</div>
+          </div> -->
+
+          <!-- Phone # -->
+          <div class="mb-3">
+            <label for="phoneNumber" class="form-label">Phone #</label>
+            <input id="phoneNumber" type="text" class="form-control" formControlName="phoneNumber" maxlength="20" />
+          </div>
+
+          <!-- Internal Notes -->
+          <div class="mb-3">
+            <label for="internalNotes" class="form-label">Internal Notes</label>
+            <textarea id="internalNotes" class="form-control" formControlName="internalNotes" rows="3" maxlength="1000"></textarea>
+          </div>
+
+          <!-- Address -->
+          <div class="mb-3 mt-3">
+            <label for="address" class="form-label">Address</label>
+            <input id="address" type="text" class="form-control" formControlName="address" maxlength="500" />
+          </div>
+
+          <!-- City/State/Zip -->
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label for="city" class="form-label">City</label>
+              <input id="city" type="text" class="form-control" formControlName="city" maxlength="100" />
+            </div>
+            <div class="col-md-4">
+              <label for="state" class="form-label">State</label>
+              <select id="state" class="form-select" formControlName="state">
+                <option value="">Select state</option>
+                <option *ngFor="let state of usStates" [value]="state">{{state}}</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label for="zipCode" class="form-label">Zip Code</label>
+              <input id="zipCode" type="text" class="form-control" formControlName="zipCode" maxlength="20" />
+            </div>
+          </div>
+
+          <!-- Country -->
+          <div class="mb-3 mt-3">
+            <label for="country" class="form-label">Country</label>
+            <input id="country" type="text" class="form-control" formControlName="country" maxlength="100" />
+          </div>
+
+          <!-- Status -->
+          <div class="mb-3">
+            <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
+            <select id="status" class="form-select" [class.is-invalid]="isFieldInvalid('status')" formControlName="status">
+              <option value="">Select a status</option>
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+              <option value="Pending">Pending</option>
+            </select>
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('status')">Status is required.</div>
+          </div>
+
+          <!-- Form Actions -->
+          <div class="d-flex justify-content-end">
+            <!-- View Mode Actions -->
+            <div *ngIf="isViewMode" class="d-flex">
+              <button type="button" class="btn btn-denim me-2" (click)="onCancel()">
+                Back to List
+              </button>
+              <button type="button" class="btn btn-denim" (click)="toggleEditMode()">
+                <i class="fa-solid fa-pen me-2"></i>Edit
+              </button>
+            </div>
+
+            <!-- Edit/Create Mode Actions -->
+            <div *ngIf="!isViewMode" class="d-flex">
+              <button type="button" class="btn btn-denim me-2" (click)="onCancel()">
+                Cancel
+              </button>
+              <button type="submit" class="btn btn-denim" [disabled]="form.invalid || submitting || remoteCodeValidationError">
+                <span *ngIf="submitting" class="spinner-border spinner-border-sm me-2"></span>
+                {{isEditMode ? 'Update' : 'Create'}} Op-Co
+              </button>
+            </div>
+          </div>
+        </form>
+
+        <!-- Customer Accounts Section (edit/view mode only) -->
+        <div *ngIf="(isEditMode || isViewMode) && opco" class="mt-4">
+          <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h5 class="mb-0">Customer Accounts ({{ customerAccounts.length }})</h5>
+            </div>
+            <div class="card-body p-0">
+              <div *ngIf="customerAccounts.length === 0" class="text-center py-3 text-muted">
+                No customer accounts associated with this Op-Co.
+              </div>
+              <div *ngIf="customerAccounts.length > 0" class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th>ID</th>
+                      <th>Account #</th>
+                      <th>Name</th>
+                      <th>Member Account</th>
+                      <th>Status</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let ca of customerAccounts">
+                      <td>{{ ca.id }}</td>
+                      <td>{{ ca.customerAccountNumber || '-' }}</td>
+                      <td>{{ ca.customerName || '-' }}</td>
+                      <td>{{ ca.memberAccountName || '-' }}</td>
+                      <td>
+                        <span class="badge" [class.bg-success]="(ca.statusName || ca.status) === 'Active'" [class.bg-secondary]="(ca.statusName || ca.status) !== 'Active'">{{ ca.statusName || ca.status }}</span>
+                      </td>
+                      <td class="text-end">
+                        <a class="btn btn-sm btn-outline-secondary" [routerLink]="['/admin/customer-accounts/view', ca.id]" title="View Customer Account">
+                          <i class="fas fa-eye"></i>
+                        </a>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+

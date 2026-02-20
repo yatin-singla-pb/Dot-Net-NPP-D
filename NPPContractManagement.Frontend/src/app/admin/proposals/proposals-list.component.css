@@ -1,0 +1,144 @@
+/* Proposals List Component Styles */
+
+.btn-denim {
+  background-color: var(--denim-color);
+  border-color: var(--denim-color);
+  color: white;
+}
+
+.btn-denim:hover {
+  background-color: rgba(0, 45, 64, 0.9);
+  border-color: rgba(0, 45, 64, 0.9);
+  color: white;
+}
+
+.btn-denim.active {
+  background-color: var(--denim-color);
+  border-color: var(--denim-color);
+  color: white;
+}
+
+.text-bg-denim {
+  background-color: var(--denim-color) !important;
+  color: white !important;
+}
+
+.fc-denim {
+  color: var(--denim-color);
+}
+
+.table-denim th {
+  background-color: var(--denim-color);
+  color: white;
+  border-color: var(--denim-color);
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.icon {
+  text-decoration: none;
+}
+
+.icon:hover {
+  opacity: 0.8;
+}
+
+/* Icon colors to match template */
+.table .icon,
+.table .icon i {
+  color: var(--denim-color) !important;
+  transition: color 0.2s ease;
+}
+
+.table .icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.table .icon:hover {
+  background-color: var(--blue-color) !important;
+  color: #ffffff !important;
+}
+
+.table .icon:hover i {
+  color: #ffffff !important;
+}
+
+/* Disabled icon style (for non-editable items) */
+.table .icon-disabled,
+.table .icon-disabled i {
+  color: #6c757d !important;
+  transition: color 0.2s ease;
+}
+
+.table .icon-disabled {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: default !important;
+}
+
+.table .icon-disabled:hover {
+  background-color: transparent !important;
+  color: #6c757d !important;
+}
+
+.table .icon-disabled:hover i {
+  color: #6c757d !important;
+}
+
+.table .icon.text-danger,
+.table .icon.text-danger i {
+  color: var(--denim-color) !important;
+}
+
+.table .icon.text-danger:hover,
+.table .icon.text-danger:hover i {
+  color: #ffffff !important;
+}
+
+.min {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.filter-pill {
+  cursor: pointer;
+  user-select: none;
+}
+
+.filter-pill:hover {
+  opacity: 0.8;
+}
+
+.status-filter-btn {
+  background-color: #f8f9fa;
+  border-color: #dee2e6;
+  color: #495057;
+}
+
+.status-filter-btn.active {
+  background-color: var(--denim-color);
+  border-color: var(--denim-color);
+  color: white;
+}
+
+.status-filter-btn:hover {
+  background-color: #e9ecef;
+  border-color: #adb5bd;
+}
+
+.status-filter-btn.active:hover {
+  background-color: rgba(0, 45, 64, 0.9);
+  border-color: rgba(0, 45, 64, 0.9);
+}

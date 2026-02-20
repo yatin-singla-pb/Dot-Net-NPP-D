@@ -1,0 +1,183 @@
+    <main class="container">
+      <nav aria-label="breadcrumb" id="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a routerLink="/admin">Administration</a></li>
+          <li class="breadcrumb-item"><a routerLink="/admin/distributor-product-codes">Distributor Product Codes</a></li>
+          <li class="breadcrumb-item active">{{isViewMode ? 'View' : (isEdit ? 'Edit' : 'Create')}}</li>
+        </ol>
+      </nav>
+
+      <h3>{{isViewMode ? 'View' : (isEdit ? 'Edit' : 'Create')}} Distributor Product Code</h3>
+
+      <div *ngIf="successMessage" class="alert alert-success">{{successMessage}}</div>
+
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <div class="row g-3">
+
+          <!-- Id (Read-only, shown only in edit/view mode) -->
+          <div class="col-12" *ngIf="isEdit || isViewMode">
+            <label class="form-label">Id</label>
+            <input
+              type="text"
+              class="form-control"
+              [value]="item?.id"
+              readonly
+              disabled>
+          </div>
+
+          <!-- Row 1: Distributor + Distributor Product Code -->
+          <div class="col-md-6">
+            <label class="form-label">Distributor <span class="text-danger">*</span></label>
+            <div class="form-control p-2" (click)="!isViewMode && toggleDistributorPanel()" [tabindex]="isViewMode ? -1 : 0"
+                 [class.is-invalid]="form.get('distributorId')?.invalid && (form.get('distributorId')?.touched || form.touched)"
+                 [style.pointer-events]="isViewMode ? 'none' : 'auto'"
+                 [style.background-color]="isViewMode ? '#e9ecef' : 'white'">
+              <span *ngIf="form.get('distributorId')?.value; else distPlaceholder">
+                {{ getDistributorName(form.get('distributorId')?.value) }}
+              </span>
+              <ng-template #distPlaceholder>
+                <span class="text-muted">Select distributor...</span>
+              </ng-template>
+            </div>
+            <div class="position-relative">
+              <div class="dropdown-menu d-block w-100 p-2" *ngIf="showDistributorPanel">
+                <input class="form-control mb-2" [value]="distributorFilter" (input)="applyDistributorFilter($any($event.target).value)">
+                <div style="max-height:240px; overflow:auto;">
+                  <div class="form-check" *ngFor="let d of filteredDistributors">
+                    <input class="form-check-input" type="radio" name="distributorOptions"
+                           [checked]="form.get('distributorId')?.value === d.id"
+                           (change)="selectDistributor(d.id)">
+                    <label class="form-check-label">{{d.name}}</label>
+                  </div>
+                </div>
+                <div class="mt-2 text-end">
+                  <button type="button" class="btn btn-sm btn-secondary" (click)="closeDistributorPanel()">Close</button>
+                </div>
+              </div>
+            </div>
+            <div class="invalid-feedback d-block" *ngIf="form.get('distributorId')?.invalid && (form.get('distributorId')?.touched || form.touched)">Distributor is required.</div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Distributor Product Code <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" formControlName="distributorCode" maxlength="255" [attr.disabled]="isViewMode ? true : null">
+          </div>
+
+          <!-- Row 2: Catch Weight + eBrand -->
+          <div class="col-12 d-flex gap-4">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" formControlName="catchWeight" id="catchWeight" [attr.disabled]="isViewMode ? true : null">
+              <label class="form-check-label" for="catchWeight">Catch Weight</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" formControlName="eBrand" id="eBrand" [attr.disabled]="isViewMode ? true : null">
+              <label class="form-check-label" for="eBrand">E-Brand</label>
+            </div>
+          </div>
+
+          <!-- Row 3: Product Section -->
+          <div class="col-12">
+            <div class="d-flex align-items-center mb-2">
+              <label class="form-label mb-0 me-3">Product <span class="text-danger">*</span></label>
+              <div *ngIf="!isViewMode" class="d-flex gap-2">
+                <button
+                  *ngIf="!selectedProduct"
+                  type="button"
+                  class="btn btn-sm btn-denim"
+                  (click)="openProductSearch()">
+                  <i class="fa-solid fa-search me-1"></i>Search
+                </button>
+                <button
+                  *ngIf="selectedProduct"
+                  type="button"
+                  class="btn btn-sm btn-denim"
+                  (click)="openProductSearch()">
+                  <i class="fa-solid fa-exchange-alt me-1"></i>Change
+                </button>
+                <button
+                  *ngIf="selectedProduct"
+                  type="button"
+                  class="btn btn-sm btn-outline-secondary"
+                  (click)="clearProduct()">
+                  <i class="fa-solid fa-times me-1"></i>Clear
+                </button>
+              </div>
+            </div>
+
+            <!-- Product Table (single row) -->
+            @if (selectedProduct) {
+              <div class="table-responsive">
+                <table class="table table-bordered table-sm mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th>ID</th>
+                      <th>MFR Code</th>
+                      <th>Manufacturer</th>
+                      <th>Brand</th>
+                      <th>Name</th>
+                      <th>Pack Size</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>{{ selectedProduct.id }}</td>
+                      <td>{{ selectedProduct.manufacturerProductCode || '-' }}</td>
+                      <td>{{ selectedProduct.manufacturerName || '-' }}</td>
+                      <td>{{ selectedProduct.brand || '-' }}</td>
+                      <td>{{ selectedProduct.name || selectedProduct.description || '-' }}</td>
+                      <td>{{ selectedProduct.packSize || '-' }}</td>
+                      <td>
+                        <span class="badge" [ngClass]="'bg-' + getStatusColor(selectedProduct.status)">
+                          {{ selectedProduct.status }}
+                        </span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            } @else {
+              <div class="alert alert-info mb-0 py-2">
+                <i class="fa-solid fa-info-circle me-2"></i>No product selected. Use the Search button to find and assign a product.
+              </div>
+            }
+            <div class="invalid-feedback d-block" *ngIf="form.get('productId')?.invalid && (form.get('productId')?.touched || form.touched)">Product is required.</div>
+          </div>
+
+        </div>
+
+        <!-- Form Actions -->
+        <div class="mt-4 d-flex justify-content-end">
+          <!-- View Mode Actions -->
+          <div *ngIf="isViewMode" class="d-flex gap-2">
+            <button type="button" class="btn btn-denim" (click)="cancel()">
+              Back to List
+            </button>
+            <button type="button" class="btn btn-denim" (click)="toggleEditMode()">
+              <i class="fa-solid fa-pen me-2"></i>Edit
+            </button>
+          </div>
+
+          <!-- Edit/Create Mode Actions -->
+          <div *ngIf="!isViewMode" class="d-flex gap-2">
+            <button type="button" class="btn btn-denim" (click)="cancel()">
+              Cancel
+            </button>
+            <button class="btn btn-denim" type="submit" [disabled]="saving || form.invalid">
+              <span *ngIf="saving" class="spinner-border spinner-border-sm me-2"></span>
+              {{isEdit ? 'Update' : 'Create'}}
+            </button>
+          </div>
+        </div>
+
+        <div class="text-danger mt-3" *ngIf="error">{{error}}</div>
+      </form>
+
+      <!-- Product Search Modal -->
+      <app-product-search-modal
+        [visible]="showProductSearchModal"
+        [selectionMode]="'single'"
+        (selectProduct)="onProductSelected($event)"
+        (closeModal)="showProductSearchModal = false">
+      </app-product-search-modal>
+    </main>

@@ -1,0 +1,74 @@
+.btn-denim{background-color:var(--denim-color);border-color:var(--denim-color);color:#fff}.btn-denim:hover{background-color:rgba(0,45,64,.9);border-color:rgba(0,45,64,.9);color:#fff}
+
+
+
+/* Match delete icon styling used in contracts list */
+.icon { text-decoration: none; }
+.table .icon,
+.table .icon i { color: var(--denim-color) !important; transition: color 0.2s ease; }
+.table .icon { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; transition: background-color 0.2s ease, color 0.2s ease; }
+.table .icon:hover { background-color: var(--blue-color) !important; color: #ffffff !important; }
+.table .icon:hover i { color: #ffffff !important; }
+.table .icon.text-danger,
+.table .icon.text-danger i { color: var(--denim-color) !important; }
+.table .icon.text-danger:hover,
+.table .icon.text-danger:hover i { color: #ffffff !important; }
+.min { width: 1%; white-space: nowrap; }
+
+
+/* Diff highlighting */
+.diff-from { background-color: #ffe6e6; }
+.diff-to { background-color: #e6ffe6; }
+
+
+/* Keep compare label, dropdown and button on same line */
+.compare-group { gap: .5rem; }
+.compare-group .form-select.w-auto { width: auto; min-width: 140px; }
+.compare-group .input-group-text { white-space: nowrap; }
+.compare-group .btn { white-space: nowrap; }
+
+
+/* Pricing rows responsive layout */
+.pricing-rows .form-label{font-size:.8rem;color:#6c757d;margin-bottom:.15rem}
+.pricing-rows .card{border-color:var(--denim-color-20)}
+.pricing-rows .fw-semibold{color:var(--denim-color)}
+
+
+/* Hide date input placeholder text when empty (no has-value class and not focused) */
+input[type="date"]:not(.has-value):not(:focus)::-webkit-datetime-edit {
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+input[type="date"]:not(.has-value):not(:focus)::-webkit-datetime-edit-text,
+input[type="date"]:not(.has-value):not(:focus)::-webkit-datetime-edit-month-field,
+input[type="date"]:not(.has-value):not(:focus)::-webkit-datetime-edit-day-field,
+input[type="date"]:not(.has-value):not(:focus)::-webkit-datetime-edit-year-field {
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+/* Show date text when focused or has value */
+input[type="date"]:focus::-webkit-datetime-edit,
+input[type="date"].has-value::-webkit-datetime-edit {
+  color: #212529 !important;
+  -webkit-text-fill-color: #212529 !important;
+}
+
+input[type="date"]:focus::-webkit-datetime-edit-text,
+input[type="date"]:focus::-webkit-datetime-edit-month-field,
+input[type="date"]:focus::-webkit-datetime-edit-day-field,
+input[type="date"]:focus::-webkit-datetime-edit-year-field,
+input[type="date"].has-value::-webkit-datetime-edit-text,
+input[type="date"].has-value::-webkit-datetime-edit-month-field,
+input[type="date"].has-value::-webkit-datetime-edit-day-field,
+input[type="date"].has-value::-webkit-datetime-edit-year-field {
+  color: #212529 !important;
+  -webkit-text-fill-color: #212529 !important;
+}
+
+/* Ensure calendar icon is still visible and clickable */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 1;
+}

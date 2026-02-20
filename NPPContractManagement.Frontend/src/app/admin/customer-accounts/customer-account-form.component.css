@@ -1,0 +1,5 @@
+.btn-denim{background-color:var(--denim-color);border-color:var(--denim-color);color:#fff}.btn-denim:hover{background-color:rgba(0,45,64,.9);border-color:rgba(0,45,64,.9);color:#fff}
+.form-label::after{content:''}
+.is-invalid{border-color:#dc3545}
+.invalid-feedback{display:block}
+

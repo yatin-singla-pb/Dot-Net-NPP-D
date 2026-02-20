@@ -1,0 +1,816 @@
+<main class="container">
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb" id="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a routerLink="/admin">Administration</a></li>
+      <li class="breadcrumb-item"><a routerLink="/admin/contracts">Contracts</a></li>
+      <li class="breadcrumb-item active">{{isEditMode ? 'Update' : 'Create'}}</li>
+    </ol>
+  </nav>
+  <!-- Action Toast (auto-dismiss) -->
+  <div class="position-fixed top-0 end-0 p-3" style="z-index: 1060" *ngIf="showActionToast">
+    <div class="toast show text-bg-denim" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body text-white">
+          {{actionToastMessage}}
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" aria-label="Close" (click)="closeActionToast()"></button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Header -->
+  <div class="d-flex align-items-center justify-content-between">
+    <h3>{{ readonlyMode ? 'Contract' : (isEditMode ? 'Update' : 'Create') + ' Contract' }}</h3>
+  </div>
+
+  <!-- Version & Actions -->
+  <div class="d-flex align-items-center justify-content-between mb-2" *ngIf="isEditMode">
+    <div class="d-flex align-items-center flex-wrap gap-3">
+      <div class="d-flex align-items-center">
+        <label class="form-label mb-0 me-2">Select Version</label>
+        <select class="form-select w-auto" [(ngModel)]="selectedVersionNumber" (change)="onVersionChange()" [ngModelOptions]="{standalone: true}">
+          <option *ngFor="let v of versions" [ngValue]="v.versionNumber">Version {{v.versionNumber}}</option>
+        </select>
+      </div>
+      <div *ngIf="showComparePanel" class="d-flex align-items-center flex-wrap gap-2">
+        <label class="form-label mb-0 me-2">Compare With</label>
+        <select class="form-select w-auto" [(ngModel)]="compareWithVersionNumber" [ngModelOptions]="{standalone: true}">
+          <option [ngValue]="null" disabled></option>
+          <option *ngFor="let v of compareCandidates" [ngValue]="v.versionNumber">Version {{v.versionNumber}}</option>
+        </select>
+        <button type="button" class="btn btn-denim" (click)="showDifferences()" [disabled]="!compareWithVersionNumber">Show Differences</button>
+      </div>
+    </div>
+    <div class="d-flex align-items-center">
+      <div class="input-group me-2" style="max-width: 260px;">
+        <span class="input-group-text">Actions</span>
+        <select
+          class="form-select"
+          [(ngModel)]="selectedAction"
+          (ngModelChange)="onActionChange($event)"
+          [ngModelOptions]="{standalone: true}">
+          <option [ngValue]="null" disabled></option>
+          <option *ngFor="let a of actions" [ngValue]="a" [disabled]="a==='Compare' && versions.length<=1">{{a}}</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <!-- Source Proposal (read-only) placed directly below Select Version -->
+  <div class="d-flex align-items-center mb-2" *ngIf="isEditMode && sourceProposalId() as pid">
+    <label class="form-label mb-0 me-2">Source Proposal</label>
+    <a [routerLink]="['/admin/proposals', pid]">#{{pid}} {{contract?.proposalTitle || ''}}</a>
+  </div>
+
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="text-center my-4">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error" class="alert alert-danger">{{error}}</div>
+  <div *ngIf="successMessage" class="alert alert-success">{{successMessage}}</div>
+
+  <!-- Form -->
+  <div class="row" *ngIf="!loading">
+    <div class="col-12">
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+
+
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" formControlName="name" [class.is-invalid]="isFieldInvalid('name')" maxlength="200" [readonly]="readonlyMode && !cloneMode"/>
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('name')">Name is required.</div>
+          </div>
+        </div>
+
+        <div class="row g-3 mt-1">
+          <div class="col-md-6">
+            <label class="form-label">Manufacturer <span class="text-danger">*</span></label>
+            <div class="form-control p-2" (click)="!readonlyMode && togglePanel('manufacturerIds')" tabindex="0" [class.is-invalid]="isFieldInvalid('manufacturerId')">
+              <span *ngIf="selectedManufacturers.length; else mfrPlaceholder">{{selectedManufacturers[0].name}}</span>
+              <ng-template #mfrPlaceholder>
+                <span class="text-muted">&nbsp;</span>
+              </ng-template>
+            </div>
+            <div class="position-relative">
+              <div class="dropdown-menu d-block w-100 p-2" *ngIf="showManufacturerPanel">
+                <input class="form-control mb-2" [value]="manufacturerFilter" (input)="applyManufacturerFilter($any($event.target).value)">
+                <div style="max-height:240px; overflow:auto;">
+                  <div class="form-check" *ngFor="let m of filteredManufacturers">
+                    <input class="form-check-input" type="radio" name="manufacturerOptions"
+                           [checked]="form.get('manufacturerId')?.value === m.id"
+                           (change)="selectManufacturer(m.id)">
+                    <label class="form-check-label">{{m.name}}</label>
+                  </div>
+                </div>
+                <div class="mt-2 text-end">
+                  <button type="button" class="btn btn-sm btn-secondary" (click)="closePanel('manufacturerIds')">Close</button>
+                </div>
+              </div>
+            </div>
+            <div class="invalid-feedback d-block" *ngIf="isFieldInvalid('manufacturerId')">Manufacturer is required.</div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Industries</label>
+            <div class="form-control p-2" (click)="!readonlyMode && togglePanel('industryIds')" tabindex="0">
+              <span class="badge text-bg-denim rounded-pill me-1 mb-1" *ngFor="let i of selectedIndustries">
+                {{i.name}}
+                <button *ngIf="!readonlyMode" type="button" class="btn-close btn-close-white btn-sm ms-1" (click)="removeFromMulti('industryIds', i.id); $event.stopPropagation()" aria-label="Remove"></button>
+              </span>
+              <span class="text-muted" *ngIf="!selectedIndustries.length">&nbsp;</span>
+            </div>
+            <div class="position-relative">
+              <div class="dropdown-menu d-block w-100 p-2" *ngIf="showIndustriesPanel">
+                <input class="form-control mb-2" [value]="industryFilter" (input)="applyIndustryFilter($any($event.target).value)">
+                <div style="max-height:240px; overflow:auto;">
+                  <div class="form-check" *ngFor="let i of filteredIndustries">
+                    <input class="form-check-input" type="checkbox" [checked]="isIdSelected('industryIds', i.id)" (change)="toggleId('industryIds', i.id)">
+                    <label class="form-check-label">{{i.name}}</label>
+                  </div>
+                </div>
+                <div class="mt-2 text-end">
+                  <button type="button" class="btn btn-sm btn-secondary me-2" (click)="closePanel('industryIds')">Close</button>
+                  <button type="button" class="btn btn-sm btn-denim" (click)="applyPanel('industryIds')">Apply</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row g-3 mt-1">
+          <div class="col-md-6">
+            <label class="form-label">Distributors</label>
+            <div class="form-control p-2" (click)="!readonlyMode && togglePanel('distributorIds')" tabindex="0">
+              <span class="badge text-bg-denim rounded-pill me-1 mb-1" *ngFor="let d of selectedDistributors">
+                {{d.name}}
+                <button *ngIf="!readonlyMode" type="button" class="btn-close btn-close-white btn-sm ms-1" (click)="removeFromMulti('distributorIds', d.id); $event.stopPropagation()" aria-label="Remove"></button>
+              </span>
+              <span class="text-muted" *ngIf="!selectedDistributors.length">&nbsp;</span>
+            </div>
+            <div class="position-relative">
+              <div class="dropdown-menu d-block w-100 p-2" *ngIf="showDistributorsPanel">
+                <input class="form-control mb-2" [value]="distributorFilter" (input)="applyDistributorFilter($any($event.target).value)">
+                <div style="max-height:240px; overflow:auto;">
+                  <div class="form-check" *ngFor="let d of filteredDistributors">
+                    <input class="form-check-input" type="checkbox" [checked]="isIdSelected('distributorIds', d.id)" (change)="toggleId('distributorIds', d.id)">
+                    <label class="form-check-label">{{d.name}}</label>
+                  </div>
+                </div>
+                <div class="mt-2 text-end">
+                  <button type="button" class="btn btn-sm btn-secondary me-2" (click)="closePanel('distributorIds')">Close</button>
+                  <button type="button" class="btn btn-sm btn-denim" (click)="applyPanel('distributorIds')">Apply</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">OpCos</label>
+            <div class="form-control p-2" (click)="!readonlyMode && togglePanel('opCoIds')" tabindex="0">
+              <span class="badge text-bg-denim rounded-pill me-1 mb-1" *ngFor="let o of selectedOpcos">
+                {{o.name}}
+                <button *ngIf="!readonlyMode" type="button" class="btn-close btn-close-white btn-sm ms-1" (click)="removeFromMulti('opCoIds', o.id); $event.stopPropagation()" aria-label="Remove"></button>
+              </span>
+              <span class="text-muted" *ngIf="!selectedOpcos.length">&nbsp;</span>
+            </div>
+            <div class="position-relative">
+              <div class="dropdown-menu d-block w-100 p-2" *ngIf="showOpcoPanel">
+                <input class="form-control mb-2" [value]="opcoFilter" (input)="applyOpcoFilter($any($event.target).value)">
+                <div style="max-height:240px; overflow:auto;">
+                  <div class="form-check" *ngFor="let o of filteredOpcos">
+                    <input class="form-check-input" type="checkbox" [checked]="isIdSelected('opCoIds', o.id)" (change)="toggleId('opCoIds', o.id)">
+                    <label class="form-check-label">{{o.name}}</label>
+                  </div>
+                </div>
+                <div class="mt-2 text-end">
+                  <button type="button" class="btn btn-sm btn-secondary me-2" (click)="closePanel('opCoIds')">Close</button>
+                  <button type="button" class="btn btn-sm btn-denim" (click)="applyPanel('opCoIds')">Apply</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+
+
+        <div class="row g-3 mt-1">
+          <div class="col-md-6">
+            <label class="form-label">Start Date <span class="text-danger">*</span></label>
+            <input type="date" class="form-control" formControlName="startDate" [class.is-invalid]="isFieldInvalid('startDate') || form.errors?.['dateOrder']" [class.has-value]="form.get('startDate')?.value" [disabled]="readonlyMode && !cloneMode"/>
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('startDate')">Start Date is required.</div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">End Date <span class="text-danger">*</span></label>
+            <input type="date" class="form-control" formControlName="endDate" [class.is-invalid]="isFieldInvalid('endDate') || form.errors?.['dateOrder']" [class.has-value]="form.get('endDate')?.value" [disabled]="readonlyMode && !cloneMode"/>
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('endDate')">End Date is required.</div>
+            <div class="text-danger small" *ngIf="form.errors?.['dateOrder']">Start Date cannot be greater than End Date.</div>
+          </div>
+        </div>
+
+
+        <div class="row g-3 mt-1">
+          <div class="col-md-6">
+            <label class="form-label">Foreign Contract ID</label>
+            <input type="text" class="form-control" formControlName="foreignContractId" maxlength="100" [readonly]="readonlyMode && !cloneMode"/>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Suspended Date</label>
+            <div class="form-control-plaintext">
+              <ng-container *ngIf="contract?.isSuspended && contract?.suspendedDate; else noSuspendedDate">
+                {{ contract?.suspendedDate | date:'MM/dd/yyyy' }}
+              </ng-container>
+              <ng-template #noSuspendedDate>—</ng-template>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- Manufacturer Details -->
+        <div class="card mt-3">
+          <div class="card-header">
+            <strong>Manufacturer Details</strong>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Manufacturer Reference Number <span class="text-danger">*</span></label>
+                <input class="form-control" formControlName="manufacturerReferenceNumber" [readonly]="readonlyMode && !cloneMode" />
+                <div class="text-danger small mt-1" *ngIf="isFieldInvalid('manufacturerReferenceNumber')">Manufacturer Reference Number is required.</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Manufacturer Billback Name</label>
+                <input class="form-control" formControlName="manufacturerBillbackName" [readonly]="readonlyMode && !cloneMode" />
+              </div>
+            </div>
+            <div class="row g-3 mt-1">
+              <div class="col-md-6">
+                <label class="form-label">Contact Person</label>
+                <input class="form-control" formControlName="contactPerson" [readonly]="readonlyMode && !cloneMode" />
+              </div>
+            </div>
+            <div class="mt-3">
+              <label class="form-label">Manufacturer Terms and Conditions</label>
+              <textarea class="form-control" rows="3" formControlName="manufacturerTermsAndConditions" [readonly]="readonlyMode && !cloneMode"></textarea>
+            </div>
+            <div class="mt-3">
+              <label class="form-label">Manufacturer Notes</label>
+              <textarea class="form-control" rows="2" formControlName="manufacturerNotes" [readonly]="readonlyMode && !cloneMode"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Entegra Details -->
+        <div class="card mt-3">
+          <div class="card-header">
+            <strong>Entegra Details</strong>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Entegra Contract Type</label>
+                <select class="form-select" formControlName="entegraContractType" [disabled]="readonlyMode && !cloneMode">
+                  <option [ngValue]="''"></option>
+                  <option value="FOP">FOP</option>
+                  <option value="GAA">GAA</option>
+                  <option value="GPP">GPP</option>
+                  <option value="MKT">MKT</option>
+                  <option value="USG">USG</option>
+                  <option value="VDA">VDA</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Entegra VDA Program</label>
+                <input class="form-control" formControlName="entegraVdaProgram" [readonly]="readonlyMode && !cloneMode" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pricing -->
+        <div class="mt-4">
+          <h5>Pricing</h5>
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <div>
+              <div class="btn-group">
+                <button type="button" class="btn btn-denim btn-sm" (click)="openAddSingleProductModal()" [disabled]="(readonlyMode && !cloneMode) || !form.get('manufacturerId')?.value">
+                  <i class="fa-solid fa-plus me-1"></i>Add Product
+                </button>
+                <button type="button" class="btn btn-outline-primary btn-sm" (click)="onAddProductClick()" [disabled]="(readonlyMode && !cloneMode) || !form.get('manufacturerId')?.value">
+                  <i class="fas fa-list me-1"></i>Select Multiple
+                </button>
+              </div>
+            </div>
+          </div>
+          <!-- Product Selection Modal -->
+          <div class="modal fade show" tabindex="-1" *ngIf="showProductModal" style="display:block; background: rgba(0,0,0,0.5);">
+            <div class="modal-dialog modal-lg">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Select Products</h5>
+                  <button type="button" class="btn-close" aria-label="Close" (click)="closeProductModal()"></button>
+                </div>
+                <div class="modal-body">
+                  <div class="mb-2">
+                    <input class="form-control" [(ngModel)]="productSearch" [ngModelOptions]="{standalone: true}">
+                  </div>
+                  <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" [(ngModel)]="selectAllProducts" [ngModelOptions]="{standalone: true}" (change)="toggleSelectAllProducts()" id="chkSelectAllProducts2">
+                    <label class="form-check-label" for="chkSelectAllProducts2">Select All</label>
+                  </div>
+                  <div style="max-height:380px; overflow:auto;">
+                    <div class="form-check" *ngFor="let product of filteredModalProducts()">
+                      <input class="form-check-input" type="checkbox" [checked]="selectedProductIds.has(product.id)" (change)="toggleProductSelection(product.id, $any($event.target).checked)" [id]="'mp_'+product.id">
+                      <label class="form-check-label" [for]="'mp_'+product.id">{{product.name}}</label>
+                    </div>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" (click)="closeProductModal()">Cancel</button>
+                  <button type="button" class="btn btn-denim" (click)="addSelectedProducts()">Add Selected Products</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pricing-rows">
+            <div class="card mb-2" *ngFor="let row of priceRows">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <div class="fw-semibold">{{ getProductName(row.productId) }}</div>
+                <a href="#" class="fs-6 icon text-danger" title="Remove"
+                   (click)="!(readonlyMode && !cloneMode) && removeProductRow(row.productId); $event.preventDefault()"
+                   [class.opacity-50]="readonlyMode && !cloneMode" [attr.aria-disabled]="readonlyMode && !cloneMode">
+                  <i class="fa-solid fa-trash-can"></i>
+                </a>
+              </div>
+              <div class="card-body py-2">
+                <!-- Row 1 -->
+                <div class="row g-2 align-items-end">
+                  <div class="col-6 col-md-3">
+                    <label class="form-label small text-muted mb-1">Price Type</label>
+                    <select class="form-select form-select-sm" [(ngModel)]="row.priceType" [ngModelOptions]="{standalone: true}" [disabled]="readonlyMode && !cloneMode">
+                      <option *ngFor="let pt of priceTypes" [ngValue]="pt">{{pt}}</option>
+                    </select>
+                  </div>
+                  <div class="col-6 col-md-3">
+                    <label class="form-label small text-muted mb-1">UOM</label>
+                    <select class="form-select form-select-sm" [(ngModel)]="row.uom" [ngModelOptions]="{standalone: true}" [disabled]="readonlyMode && !cloneMode">
+                      <option *ngFor="let u of uoms" [ngValue]="u">{{u}}</option>
+                    </select>
+                  </div>
+                  <div class="col-6 col-md-3">
+                    <label class="form-label small text-muted mb-1">Est Qty</label>
+                    <input type="number" step="0.01" class="form-control form-control-sm" [value]="row.estimatedQty" (input)="row.estimatedQty=parseNum($any($event.target).value)" [disabled]="readonlyMode && !cloneMode"/>
+                  </div>
+                  <div class="col-6 col-md-3">
+                    <label class="form-label small text-muted mb-1">Billbacks</label>
+                    <select class="form-select form-select-sm" [(ngModel)]="row.billbacksAllowed" [ngModelOptions]="{standalone: true}" [disabled]="readonlyMode && !cloneMode">
+                      <option [ngValue]="false">No</option>
+                      <option [ngValue]="true">Yes</option>
+                    </select>
+                  </div>
+                </div>
+                <!-- Row 2 -->
+                <div class="row g-2 mt-1">
+                  <div class="col-6 col-md-3">
+                    <label class="form-label small text-muted mb-1">Allowance</label>
+                    <div class="input-group input-group-sm">
+                      <span class="input-group-text">$</span>
+                      <input type="number" step="0.0001" class="form-control form-control-sm" [value]="row.allowance" (input)="onAllowanceInput(row, parseNum($any($event.target).value))" [disabled]="(readonlyMode && !cloneMode) || isAllowanceDisabledByPricing(row)"/>
+                    </div>
+                  </div>
+                  <div class="col-6 col-md-3">
+                    <label class="form-label small text-muted mb-1">Commercial DEL</label>
+                    <div class="input-group input-group-sm">
+                      <span class="input-group-text">$</span>
+                      <input type="number" step="0.01" class="form-control form-control-sm" [value]="row.commercialDelPrice" (input)="onPricingInput(row, 'commercialDelPrice', parseNum($any($event.target).value))" [disabled]="(readonlyMode && !cloneMode) || isPricingDisabledByAllowance(row)"/>
+                    </div>
+                  </div>
+                  <div class="col-6 col-md-3">
+                    <label class="form-label small text-muted mb-1">Commercial FOB</label>
+                    <div class="input-group input-group-sm">
+                      <span class="input-group-text">$</span>
+                      <input type="number" step="0.01" class="form-control form-control-sm" [value]="row.commercialFobPrice" (input)="onPricingInput(row, 'commercialFobPrice', parseNum($any($event.target).value))" [disabled]="(readonlyMode && !cloneMode) || isPricingDisabledByAllowance(row)"/>
+                    </div>
+                  </div>
+                  <div class="col-6 col-md-3">
+                    <label class="form-label small text-muted mb-1">PUA</label>
+                    <div class="input-group input-group-sm">
+                      <span class="input-group-text">$</span>
+                      <input type="number" step="0.01" class="form-control form-control-sm" [value]="row.pua" (input)="onPricingInput(row, 'pua', parseNum($any($event.target).value))" [disabled]="(readonlyMode && !cloneMode) || isPricingDisabledByAllowance(row)"/>
+                    </div>
+                  </div>
+                  <div class="col-6 col-md-3">
+                    <label class="form-label small text-muted mb-1">FFS Price</label>
+                    <div class="input-group input-group-sm">
+                      <span class="input-group-text">$</span>
+                      <input type="number" step="0.01" class="form-control form-control-sm" [value]="row.ffsPrice" (input)="row.ffsPrice=parseNum($any($event.target).value)" [disabled]="readonlyMode && !cloneMode"/>
+                    </div>
+                  </div>
+                  <div class="col-6 col-md-3">
+                    <label class="form-label small text-muted mb-1">NOI</label>
+                    <select class="form-select form-select-sm" [ngModel]="row.noiPrice" (ngModelChange)="row.noiPrice=$event" [ngModelOptions]="{standalone: true}" [disabled]="readonlyMode && !cloneMode">
+                      <option [ngValue]="null">Select</option>
+                      <option [ngValue]="true">Y</option>
+                      <option [ngValue]="false">N</option>
+                    </select>
+                  </div>
+                  <div class="col-6 col-md-3">
+                    <label class="form-label small text-muted mb-1">PTV</label>
+                    <div class="input-group input-group-sm">
+                      <span class="input-group-text">$</span>
+                      <input type="number" step="0.01" class="form-control form-control-sm" [value]="row.ptv" (input)="row.ptv=parseNum($any($event.target).value)" [disabled]="readonlyMode && !cloneMode"/>
+                    </div>
+                  </div>
+                </div>
+                <!-- Row 3: Internal Notes on its own line -->
+                <div class="row g-2 mt-1">
+                  <div class="col-12">
+                    <label class="form-label small text-muted mb-1">Internal Notes</label>
+                    <input type="text" class="form-control form-control-sm" [value]="row.internalNotes ?? ''" (input)="row.internalNotes=$any($event.target).value" [disabled]="readonlyMode && !cloneMode"/>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-check mt-3">
+
+        </div>
+        <div class="form-check mt-2">
+          <input class="form-check-input" type="checkbox" id="sendToPerformance" formControlName="sendToPerformance" [disabled]="readonlyMode && !cloneMode">
+          <label class="form-check-label" for="sendToPerformance">
+            Send To Performance
+
+          </label>
+        </div>
+
+        <div class="mt-3">
+          <label class="form-label">Internal Notes</label>
+          <textarea class="form-control" rows="3" formControlName="internalNotes" [readonly]="readonlyMode && !cloneMode"></textarea>
+        </div>
+
+        <div *ngIf="validationErrors.length" class="alert alert-danger mt-3">
+          <strong>Please fix the following:</strong>
+          <ul class="mb-0 mt-1">
+            <li *ngFor="let err of validationErrors">{{ err }}</li>
+          </ul>
+        </div>
+        <div class="d-flex justify-content-end mt-3" *ngIf="!readonlyMode; else viewButtons">
+          <button type="button" class="btn btn-secondary me-2" (click)="onCancel()">Cancel</button>
+          <button type="submit" class="btn btn-denim" [disabled]="submitting">
+            <span *ngIf="submitting" class="spinner-border spinner-border-sm me-2"></span>
+            {{isEditMode ? 'Update' : 'Create'}} Contract
+          </button>
+        </div>
+        <ng-template #viewButtons>
+          <div class="d-flex justify-content-between mt-3">
+            <button type="button" class="btn btn-secondary" (click)="onCancel()">Cancel</button>
+            <button type="button" class="btn btn-denim" [disabled]="!cloneMode || submitting" (click)="onSaveAndUpdateClone()">Save and Update</button>
+          </div>
+        </ng-template>
+      </form>
+    </div>
+  </div>
+
+  <!-- Diff Modal -->
+  <div class="modal fade show" tabindex="-1" style="display:block; background: rgba(0,0,0,0.5);" *ngIf="showDiffModal">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Version Differences</h5>
+          <button type="button" class="btn-close" aria-label="Close" (click)="closeDiffModal()"></button>
+        </div>
+
+        <div class="modal-body" style="max-height:70vh; overflow:auto;">
+          <div *ngIf="!diffResult || (diffResult.headerDiff?.length===0 && diffResult.added?.length===0 && diffResult.removed?.length===0 && diffResult.modified?.length===0)" class="text-muted">
+            No differences found.
+          </div>
+
+          <!-- Header field changes -->
+          <div *ngIf="diffResult?.headerDiff?.length">
+            <h6>Header</h6>
+            <table class="table table-sm">
+              <thead><tr><th>Field</th><th class="text-danger">From</th><th class="text-success">To</th></tr></thead>
+              <tbody>
+                <tr *ngFor="let h of diffResult.headerDiff">
+                  <td class="fw-semibold">{{h.field}}</td>
+                  <td class="text-danger">{{h.from}}</td>
+                  <td class="text-success">{{h.to}}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Products added/removed/modified -->
+          <div class="row g-3">
+            <div class="col-md-4" *ngIf="diffResult?.added?.length">
+              <h6>Products Added</h6>
+              <ul class="list-group list-group-flush">
+                <li class="list-group-item py-1" *ngFor="let p of diffResult.added">
+                  <span class="badge bg-success me-2">Added</span>{{p.productName}} ({{p.productId}})
+                </li>
+              </ul>
+            </div>
+            <div class="col-md-4" *ngIf="diffResult?.removed?.length">
+              <h6>Products Removed</h6>
+              <ul class="list-group list-group-flush">
+                <li class="list-group-item py-1" *ngFor="let p of diffResult.removed">
+                  <span class="badge bg-danger me-2">Removed</span>{{p.productName}} ({{p.productId}})
+                </li>
+              </ul>
+            </div>
+            <div class="col-md-12" *ngIf="diffResult?.modified?.length">
+              <h6>Products Modified</h6>
+              <div class="card mb-2" *ngFor="let m of diffResult.modified">
+                <div class="card-header py-1"><strong>{{m.productName}}</strong> ({{m.productId}})</div>
+                <div class="card-body p-2">
+                  <table class="table table-sm mb-0">
+                    <thead><tr><th>Field</th><th class="text-danger">From</th><th class="text-success">To</th></tr></thead>
+                    <tbody>
+                      <tr *ngFor="let f of m.fields">
+                        <td class="fw-semibold">{{f.name}}</td>
+                        <td class="text-danger">{{f.from}}</td>
+                        <td class="text-success">{{f.to}}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Side-by-side pricing tables -->
+          <div class="mt-3" *ngIf="diffResult?.pricingSideBySide?.length">
+            <h6>Pricing Side-by-Side</h6>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="table-responsive">
+                  <table class="table table-sm table-bordered align-middle">
+                    <thead>
+                      <tr>
+                        <th [attr.colspan]="2 + diffResult.fields.length" class="bg-light">Version {{diffResult.leftVersion}}</th>
+                      </tr>
+                      <tr>
+                        <th>Product</th>
+                        <th>Product Id</th>
+                        <th *ngFor="let f of diffResult.fields">{{f}}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let e of diffResult.pricingSideBySide">
+                        <td>{{ e.nameA }}</td>
+                        <td class="min">{{ e.productId }}</td>
+                        <td *ngFor="let f of diffResult.fields" [class.diff-from]="e.diffFields?.has(f)">
+                          {{ e.a ? e.a[f] : '—' }}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="table-responsive">
+                  <table class="table table-sm table-bordered align-middle">
+                    <thead>
+                      <tr>
+                        <th [attr.colspan]="2 + diffResult.fields.length" class="bg-light">Version {{diffResult.rightVersion}}</th>
+                      </tr>
+                      <tr>
+                        <th>Product</th>
+                        <th>Product Id</th>
+                        <th *ngFor="let f of diffResult.fields">{{f}}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let e of diffResult.pricingSideBySide">
+                        <td>{{ e.nameB }}</td>
+                        <td class="min">{{ e.productId }}</td>
+                        <td *ngFor="let f of diffResult.fields" [class.diff-to]="e.diffFields?.has(f)">
+                          {{ e.b ? e.b[f] : '—' }}
+                        </td>
+                      </tr>
+                    </tbody>
+
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-denim" (click)="closeDiffModal()">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Suspend Confirmation Modal -->
+  <div *ngIf="showSuspendModal" class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Confirm Suspend</h5>
+          <button type="button" class="btn-close" aria-label="Close" (click)="closeSuspendModal()"></button>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to suspend this contract? This will set Is Suspended and record today as Suspended Date.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-denim" (click)="closeSuspendModal()">Cancel</button>
+          <button type="button" class="btn btn-denim" (click)="confirmSuspend()">Suspend</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Backdrop -->
+  <div *ngIf="showSuspendModal" class="modal-backdrop fade show"></div>
+
+  <!-- Unsuspend Confirmation Modal -->
+  <div *ngIf="showUnsuspendModal" class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Confirm Unsuspend</h5>
+          <button type="button" class="btn-close" aria-label="Close" (click)="closeUnsuspendModal()"></button>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to unsuspend this contract?</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-denim" (click)="closeUnsuspendModal()">Cancel</button>
+          <button type="button" class="btn btn-denim" (click)="confirmUnsuspend()">Unsuspend</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Backdrop -->
+  <div *ngIf="showUnsuspendModal" class="modal-backdrop fade show"></div>
+
+  <!-- Add Single Product Modal -->
+  <div *ngIf="showAddSingleProductModal" class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Add Product</h5>
+          <button type="button" class="btn-close" aria-label="Close" (click)="cancelAddSingleProductModal()"></button>
+        </div>
+        <div class="modal-body">
+          <!-- Error -->
+          <div *ngIf="addSingleProductError" class="alert alert-danger">{{ addSingleProductError }}</div>
+
+          <!-- Product Selection via Search Modal -->
+          <div class="mb-3">
+            <div class="d-flex align-items-center mb-2">
+              <label class="form-label mb-0 me-3">Product <span class="text-danger">*</span></label>
+              <button type="button" class="btn btn-sm btn-denim me-2" (click)="openProductSearchForAdd()">
+                <i class="fa-solid fa-search me-1"></i>{{ selectedAddProduct ? 'Change' : 'Search' }}
+              </button>
+              <button *ngIf="selectedAddProduct" type="button" class="btn btn-sm btn-outline-secondary" (click)="clearAddProduct()">
+                <i class="fa-solid fa-times me-1"></i>Clear
+              </button>
+            </div>
+            <div *ngIf="selectedAddProduct" class="table-responsive">
+              <table class="table table-bordered table-sm mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Product Code</th>
+                    <th>Name</th>
+                    <th>Brand</th>
+                    <th>Pack Size</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>{{ selectedAddProduct.manufacturerProductCode || 'N/A' }}</strong></td>
+                    <td>{{ selectedAddProduct.name || selectedAddProduct.description }}</td>
+                    <td>{{ selectedAddProduct.brand || 'N/A' }}</td>
+                    <td>{{ selectedAddProduct.packSize || 'N/A' }}</td>
+                    <td><span class="badge bg-success">{{ selectedAddProduct.status || 'Active' }}</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div *ngIf="!selectedAddProduct" class="text-muted small">Click Search to find and select a product.</div>
+          </div>
+
+          <!-- Row 1: Price Type, UOM, Est Qty, Billbacks -->
+          <div class="row g-2 align-items-end">
+            <div class="col-md-3">
+              <label class="form-label small text-muted mb-1">Price Type</label>
+              <select class="form-select form-select-sm" [(ngModel)]="addSingleProduct.priceType" [ngModelOptions]="{standalone: true}">
+                <option *ngFor="let pt of priceTypes" [ngValue]="pt">{{ pt }}</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small text-muted mb-1">UOM</label>
+              <select class="form-select form-select-sm" [(ngModel)]="addSingleProduct.uom" [ngModelOptions]="{standalone: true}">
+                <option *ngFor="let u of uoms" [ngValue]="u">{{ u }}</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small text-muted mb-1">Est Qty</label>
+              <input type="number" step="0.01" class="form-control form-control-sm" [(ngModel)]="addSingleProduct.estimatedQty" [ngModelOptions]="{standalone: true}">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small text-muted mb-1">Billbacks</label>
+              <select class="form-select form-select-sm" [(ngModel)]="addSingleProduct.billbacksAllowed" [ngModelOptions]="{standalone: true}">
+                <option [ngValue]="false">No</option>
+                <option [ngValue]="true">Yes</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Row 2: Pricing fields -->
+          <div class="row g-2 mt-2">
+            <div class="col-6 col-md-3">
+              <label class="form-label small text-muted mb-1">Allowance</label>
+              <div class="input-group input-group-sm">
+                <span class="input-group-text">$</span>
+                <input type="number" step="0.0001" class="form-control form-control-sm" [(ngModel)]="addSingleProduct.allowance" [ngModelOptions]="{standalone: true}">
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small text-muted mb-1">Commercial DEL</label>
+              <div class="input-group input-group-sm">
+                <span class="input-group-text">$</span>
+                <input type="number" step="0.01" class="form-control form-control-sm" [(ngModel)]="addSingleProduct.commercialDelPrice" [ngModelOptions]="{standalone: true}">
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small text-muted mb-1">Commercial FOB</label>
+              <div class="input-group input-group-sm">
+                <span class="input-group-text">$</span>
+                <input type="number" step="0.01" class="form-control form-control-sm" [(ngModel)]="addSingleProduct.commercialFobPrice" [ngModelOptions]="{standalone: true}">
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small text-muted mb-1">PUA</label>
+              <div class="input-group input-group-sm">
+                <span class="input-group-text">$</span>
+                <input type="number" step="0.01" class="form-control form-control-sm" [(ngModel)]="addSingleProduct.pua" [ngModelOptions]="{standalone: true}">
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small text-muted mb-1">FFS Price</label>
+              <div class="input-group input-group-sm">
+                <span class="input-group-text">$</span>
+                <input type="number" step="0.01" class="form-control form-control-sm" [(ngModel)]="addSingleProduct.ffsPrice" [ngModelOptions]="{standalone: true}">
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small text-muted mb-1">NOI</label>
+              <select class="form-select form-select-sm" [(ngModel)]="addSingleProduct.noiPrice" [ngModelOptions]="{standalone: true}">
+                <option [ngValue]="null">Select</option>
+                <option [ngValue]="true">Y</option>
+                <option [ngValue]="false">N</option>
+              </select>
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small text-muted mb-1">PTV</label>
+              <div class="input-group input-group-sm">
+                <span class="input-group-text">$</span>
+                <input type="number" step="0.01" class="form-control form-control-sm" [(ngModel)]="addSingleProduct.ptv" [ngModelOptions]="{standalone: true}">
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 3: Internal Notes -->
+          <div class="row g-2 mt-2">
+            <div class="col-12">
+              <label class="form-label small text-muted mb-1">Internal Notes</label>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="addSingleProduct.internalNotes" [ngModelOptions]="{standalone: true}">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-denim" (click)="cancelAddSingleProductModal()">Cancel</button>
+          <button type="button" class="btn btn-denim" (click)="confirmAddSingleProduct()">
+            <i class="fas fa-plus me-1"></i>Add Product
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div *ngIf="showAddSingleProductModal" class="modal-backdrop fade show"></div>
+
+  <!-- Product Search Modal -->
+  <app-product-search-modal
+    [visible]="showProductSearchForAdd"
+    [selectionMode]="'single'"
+    [manufacturerId]="form.get('manufacturerId')?.value"
+    (selectProduct)="onAddProductSelected($event)"
+    (closeModal)="showProductSearchForAdd = false">
+  </app-product-search-modal>
+
+</main>
+

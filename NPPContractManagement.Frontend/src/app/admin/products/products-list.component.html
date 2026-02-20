@@ -1,0 +1,301 @@
+    <main class="container">
+      <!-- Breadcrumb -->
+      <nav aria-label="breadcrumb" id="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a routerLink="/admin">Administration</a></li>
+          <li class="breadcrumb-item active">Products</li>
+        </ol>
+      </nav>
+
+      <!-- Header -->
+      <div>
+        <h3>
+          <span>Products</span>
+          <span>
+            <a routerLink="/admin/products/create" class="fs-3 ms-2" title="Add new product">
+              <i class="fa-solid fa-plus"></i>
+            </a>
+          </span>
+        </h3>
+
+        <!-- Search and Filters -->
+        <form>
+          <div class="d-flex">
+            <!-- Search Input -->
+            <input
+              type="search"
+              class="form-control flex-fill me-2"
+              placeholder="Search by ID, name, or product code"
+              [(ngModel)]="searchTerm"
+              (input)="onSearchChange($any($event.target).value || '')"
+              name="search">
+
+            <!-- Status Filter Buttons -->
+            <div class="btn-group me-2" role="group" aria-label="Filter by status">
+              <button
+                type="button"
+                class="btn status-filter-btn"
+                [class.active]="statusFilter === 'Active'"
+                (click)="onStatusFilterChange('Active')">
+                Active
+              </button>
+              <button
+                type="button"
+                class="btn status-filter-btn"
+                [class.active]="statusFilter === 'Inactive'"
+                (click)="onStatusFilterChange('Inactive')">
+                Inactive
+              </button>
+
+            </div>
+
+            <!-- Advanced Filters Toggle -->
+            <a href="#" class="fs-3 me-2" (click)="toggleAdvancedFilters(); $event.preventDefault()">
+              <i class="fa-solid fa-filter"></i>
+            </a>
+
+            <!-- Actions Dropdown -->
+            <div class="dropdown">
+              <a href="#" data-bs-toggle="dropdown" aria-expanded="false" class="fs-3">
+                <i class="fa-solid fa-bars"></i>
+              </a>
+              <ul class="dropdown-menu">
+                <li>
+                  <button
+                    type="button"
+                    class="dropdown-item"
+                    (click)="exportToExcel()"
+                    [disabled]="loading">
+                    <i class="fa-solid fa-download"></i> Export Results
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Filter Pills -->
+          <div class="d-flex mt-2">
+            <span
+              *ngIf="statusFilter"
+              class="badge text-bg-denim filter-pill clickable"
+              (click)="onStatusFilterChange('')">
+              Status:&nbsp;{{statusFilter | titlecase}} ✕
+            </span>
+            <span
+              *ngIf="searchTerm"
+              class="badge text-bg-denim filter-pill clickable ms-2"
+              (click)="onSearchChange('')">
+              Search: {{searchTerm}} ✕
+            </span>
+            <span
+              *ngIf="selectedManufacturerId"
+              class="badge text-bg-denim filter-pill clickable ms-2"
+              (click)="removeFilter('manufacturerId')">
+              Manufacturer: {{getManufacturerNameById(selectedManufacturerId!)}} ✕
+            </span>
+            <span
+              *ngIf="selectedBrand"
+              class="badge text-bg-denim filter-pill clickable ms-2"
+              (click)="removeFilter('brand')">
+              Brand: {{selectedBrand}} ✕
+            </span>
+            <button
+              *ngIf="selectedManufacturerId || selectedBrand"
+              type="button"
+              class="badge text-bg-denim filter-pill clickable ms-2"
+              (click)="clearAdvancedFilters()">
+              Clear Advanced Filters
+            </button>
+            <button
+              *ngIf="statusFilter || searchTerm || selectedManufacturerId || selectedBrand"
+              type="button"
+              class="badge text-bg-denim filter-pill clickable ms-2"
+              (click)="clearAllFilters()">
+              Clear All Filters
+            </button>
+          </div>
+
+          <!-- Advanced Filters Modal -->
+          <div class="modal fade" [class.show]="showAdvancedFilters" [style.display]="showAdvancedFilters ? 'block' : 'none'">
+            <div class="modal-dialog modal-dialog-scrollable">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h1 class="modal-title fs-5 fc-denim">Additional Filters</h1>
+                  <button type="button" class="btn-close" (click)="toggleAdvancedFilters()"></button>
+                </div>
+                <div class="modal-body">
+                  <div class="mb-3">
+                    <label for="manufacturerFilter" class="form-label">Manufacturer</label>
+                    <select id="manufacturerFilter" class="form-select" [(ngModel)]="selectedManufacturerId" name="manufacturerFilter">
+                      <option *ngFor="let m of manufacturers" [ngValue]="m.id">{{m.name}}</option>
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <label for="brandFilter" class="form-label">Brand</label>
+                    <select id="brandFilter" class="form-select" [(ngModel)]="selectedBrand" name="brandFilter">
+                      <option [ngValue]="null">Select brand</option>
+                      <option *ngFor="let b of brands" [ngValue]="b">{{b}}</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" (click)="toggleAdvancedFilters()">Close</button>
+                  <button type="button" class="btn btn-denim" (click)="loadData(); toggleAdvancedFilters()">Apply Filters</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+
+        <!-- Loading Indicator -->
+        <div *ngIf="loading" class="text-center my-4">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+
+        <!-- Error Message -->
+        <div *ngIf="error" class="alert alert-danger mt-3">
+          {{error}}
+        </div>
+
+        <!-- Data Table -->
+        <div class="table-responsive mt-3" *ngIf="!loading">
+          <table class="table">
+            <thead>
+              <tr>
+
+                <th
+                  *ngFor="let column of columns"
+                  [class]="column.width ? 'min' : ''"
+                  [style.cursor]="column.sortable ? 'pointer' : 'default'"
+                  (click)="column.sortable ? onSort(column.key) : null">
+                  {{column.label}}
+                  <i
+                    *ngIf="column.sortable"
+                    class="fa-solid ms-1"
+                    [class]="getSortIcon(column.key)">
+                  </i>
+                </th>
+                <th class="text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of paginatedItems">
+
+                <td>{{item.id}}</td>
+                <td>{{item.name}}</td>
+                <td>{{item.manufacturerProductCode}}</td>
+                <td>{{item.brand || 'N/A'}}</td>
+                <td>{{item.manufacturerName || 'N/A'}}</td>
+                <td>{{item.packSize || 'N/A'}}</td>
+                <td>
+                  <span
+                    class="badge"
+                    [class]="'bg-' + getStatusColor(item.status)">
+                    {{item.status}}
+                  </span>
+                </td>
+                <td>
+                  <div class="d-flex justify-content-center">
+                    <a
+                      [routerLink]="['/admin/products/view', item.id]"
+                      class="me-2 fs-6 icon"
+                      title="View Product">
+                      <i class="fa-solid fa-eye"></i>
+                    </a>
+                    <a
+                      href="#"
+                      class="fs-6 icon text-danger"
+                      (click)="openDeleteModal(item); $event.preventDefault()">
+                      <i class="fa-solid fa-trash-can"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="d-flex flex-row-reverse mt-3" *ngIf="!loading && paginatedItems.length > 0">
+          <ul class="pagination">
+            <li class="page-item" [class.disabled]="pagination.currentPage === 1">
+              <a href="#" class="page-link" (click)="onPageChange(1); $event.preventDefault()">&lt;&lt;</a>
+            </li>
+            <li class="page-item" [class.disabled]="pagination.currentPage === 1">
+              <a href="#" class="page-link" (click)="onPageChange(pagination.currentPage - 1); $event.preventDefault()">&lt;</a>
+            </li>
+            <li
+              *ngFor="let page of getPageNumbers()"
+              class="page-item"
+              [class.active]="page === pagination.currentPage"
+              [class.disabled]="page === -1">
+              <a
+                href="#"
+                class="page-link"
+                (click)="page !== -1 ? onPageChange(page) : null; $event.preventDefault()">
+                {{page === -1 ? '...' : page}}
+              </a>
+            </li>
+            <li class="page-item" [class.disabled]="pagination.currentPage === pagination.totalPages">
+              <a href="#" class="page-link" (click)="onPageChange(pagination.currentPage + 1); $event.preventDefault()">&gt;</a>
+            </li>
+            <li class="page-item" [class.disabled]="pagination.currentPage === pagination.totalPages">
+              <a href="#" class="page-link" (click)="onPageChange(pagination.totalPages); $event.preventDefault()">&gt;&gt;</a>
+            </li>
+          </ul>
+
+          <div class="me-5 align-self-center">
+            <span>{{pagination.startIndex + 1}} to {{Math.min(pagination.endIndex + 1, pagination.totalItems)}} of {{pagination.totalItems}}</span>
+          </div>
+
+          <div class="me-5 align-self-center">
+            <label class="form-label m-0" for="pageSize">Rows per page:</label>
+            <select
+              class="m-0 p-0 border-top-0 border-start-0 border-end-0 border-bottom-1"
+              [(ngModel)]="pagination.pageSize"
+              [ngModelOptions]="{standalone: true}"
+              (ngModelChange)="onPageSizeChange(+($event))"
+              name="pageSize">
+              <option [ngValue]="1">1</option>
+              <option [ngValue]="2">2</option>
+              <option [ngValue]="5">5</option>
+              <option [ngValue]="10">10</option>
+              <option [ngValue]="20">20</option>
+              <option [ngValue]="50">50</option>
+              <option [ngValue]="100">100</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- No Data Message -->
+        <div *ngIf="!loading && paginatedItems.length === 0" class="text-center my-5">
+          <p class="text-muted">No products found.</p>
+          <a routerLink="/admin/products/create" class="btn btn-denim">
+            <i class="fa-solid fa-plus me-2"></i>Add First Product
+          </a>
+        </div>
+      </div>
+      <!-- Delete Confirmation Modal -->
+      <div *ngIf="showDeleteModal" class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Confirm Deletion</h5>
+              <button type="button" class="btn-close" aria-label="Close" (click)="closeDeleteModal()"></button>
+            </div>
+            <div class="modal-body">
+              <p>Are you sure you want to delete?</p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-denim" (click)="closeDeleteModal()">Cancel</button>
+              <button type="button" class="btn btn-denim" (click)="confirmDelete()">Delete</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Backdrop -->
+      <div *ngIf="showDeleteModal" class="modal-backdrop fade show"></div>
+
+    </main>

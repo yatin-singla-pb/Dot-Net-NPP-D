@@ -1,0 +1,239 @@
+<main class="container">
+  <nav aria-label="breadcrumb" id="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a routerLink="/admin">Administration</a></li>
+      <li class="breadcrumb-item"><a routerLink="/admin/products">Products</a></li>
+      <li class="breadcrumb-item active">{{isViewMode ? 'View' : (isEditMode ? 'Edit' : 'Create')}} Product</li>
+    </ol>
+  </nav>
+
+  <h3>{{isViewMode ? 'View' : (isEditMode ? 'Edit' : 'Create')}} Product</h3>
+
+  <div *ngIf="loading" class="text-center my-4">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+
+  <div *ngIf="error" class="alert alert-danger">{{error}}</div>
+  <div *ngIf="successMessage" class="alert alert-success">{{successMessage}}</div>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" *ngIf="!loading">
+    <div class="row g-3">
+
+      <!-- Id (Read-only, shown only in edit/view mode) -->
+      <div class="col-12" *ngIf="isEditMode || isViewMode">
+        <label class="form-label">Id</label>
+        <input
+          type="text"
+          class="form-control"
+          [value]="product?.id"
+          readonly
+          disabled>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Description <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" [class.is-invalid]="isFieldInvalid('name')" formControlName="name">
+        <div class="invalid-feedback" *ngIf="isFieldInvalid('name')">
+          <div *ngIf="form.get('name')?.errors?.['required']">Description is required.</div>
+          <div *ngIf="form.get('name')?.errors?.['maxlength']">Description cannot exceed 200 characters.</div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Manufacturer Product Code <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" [class.is-invalid]="isFieldInvalid('manufacturerProductCode')" formControlName="manufacturerProductCode">
+        <div class="invalid-feedback" *ngIf="isFieldInvalid('manufacturerProductCode')">
+          <div *ngIf="form.get('manufacturerProductCode')?.errors?.['required']">Manufacturer Product Code is required.</div>
+          <div *ngIf="form.get('manufacturerProductCode')?.errors?.['maxlength']">Cannot exceed 100 characters.</div>
+        </div>
+      </div>
+      <!-- Description field hidden per user request -->
+      <!-- <div class="col-12">
+        <label class="form-label">Description</label>
+        <input type="text" class="form-control" [class.is-invalid]="isFieldInvalid('description')" formControlName="description">
+        <div class="invalid-feedback" *ngIf="isFieldInvalid('description')">
+          <div *ngIf="form.get('description')?.errors?.['maxlength']">Description cannot exceed 500 characters.</div>
+        </div>
+      </div> -->
+      <div class="col-12">
+        <label class="form-label">Brand <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" [class.is-invalid]="isFieldInvalid('brand')" formControlName="brand">
+        <div class="invalid-feedback" *ngIf="isFieldInvalid('brand')">
+          <div *ngIf="form.get('brand')?.errors?.['required']">Brand is required.</div>
+          <div *ngIf="form.get('brand')?.errors?.['maxlength']">Brand cannot exceed 100 characters.</div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label">GTIN</label>
+        <input type="text" class="form-control" formControlName="gtin">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">UPC</label>
+        <input type="text" class="form-control" formControlName="upc">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">SKU</label>
+        <input type="text" class="form-control" formControlName="sku">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Pack Size <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" [class.is-invalid]="isFieldInvalid('packSize')" formControlName="packSize">
+        <div class="invalid-feedback" *ngIf="isFieldInvalid('packSize')">
+          <div *ngIf="form.get('packSize')?.errors?.['required']">Pack Size is required.</div>
+          <div *ngIf="form.get('packSize')?.errors?.['maxlength']">Pack Size cannot exceed 100 characters.</div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Manufacturer <span class="text-danger">*</span></label>
+        <div
+          class="form-control p-2"
+          (click)="!isViewMode && toggleManufacturerPanel()"
+          [tabindex]="isViewMode ? -1 : 0"
+          [class.is-invalid]="isFieldInvalid('manufacturerId')"
+          [style.pointer-events]="isViewMode ? 'none' : 'auto'"
+          [style.background-color]="isViewMode ? '#e9ecef' : 'white'">
+          <span *ngIf="form.get('manufacturerId')?.value; else mfrPlaceholder">
+            {{ getManufacturerName(form.get('manufacturerId')?.value) }}
+          </span>
+          <ng-template #mfrPlaceholder>
+            <span class="text-muted">Select a manufacturer...</span>
+          </ng-template>
+        </div>
+        <div class="position-relative">
+          <div class="dropdown-menu d-block w-100 p-2" *ngIf="showManufacturerPanel">
+            <input
+              class="form-control mb-2"
+              [value]="manufacturerFilter"
+              (input)="applyManufacturerFilter($any($event.target).value)">
+            <div style="max-height:240px; overflow:auto;">
+              <div class="form-check" *ngFor="let m of filteredManufacturers">
+                <input
+                  class="form-check-input"
+                  type="radio"
+                  name="manufacturerOptions"
+                  [checked]="form.get('manufacturerId')?.value === m.id"
+                  (change)="selectManufacturer(m.id)">
+                <label class="form-check-label">{{ m.name }}</label>
+              </div>
+            </div>
+            <div class="mt-2 text-end">
+              <button type="button" class="btn btn-sm btn-secondary" (click)="closeManufacturerPanel()">Close</button>
+            </div>
+          </div>
+        </div>
+        <div class="invalid-feedback d-block" *ngIf="isFieldInvalid('manufacturerId')">
+          <div>Manufacturer is required.</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Category</label>
+        <input type="text" class="form-control" formControlName="category">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Sub Category</label>
+        <input type="text" class="form-control" formControlName="subCategory">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Tertiary Category</label>
+        <input type="text" class="form-control" formControlName="tertiaryCategory">
+      </div>
+      <div class="col-12 col-md-3">
+        <label class="form-label">Always List Price</label>
+        <select class="form-select" formControlName="alwaysList">
+          <option [ngValue]="null">Select</option>
+          <option [ngValue]="true">Y</option>
+          <option [ngValue]="false">N</option>
+        </select>
+      </div>
+      <div class="col-12 col-md-1">
+        <label class="form-label mb-1">Status <span class="text-danger">*</span></label>
+        <select class="form-select" [class.is-invalid]="isFieldInvalid('status')" formControlName="status">
+          <option value="Active">Active</option>
+          <option value="Inactive">Inactive</option>
+        </select>
+        <div class="invalid-feedback" *ngIf="isFieldInvalid('status')">
+          <div *ngIf="form.get('status')?.errors?.['required']">Status is required.</div>
+        </div>
+      </div>
+      <div class="col-12 col-md-8">
+        <label class="form-label">Notes</label>
+        <textarea class="form-control" formControlName="notes" rows="2"></textarea>
+      </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="mt-4 d-flex justify-content-end">
+      <!-- View Mode Actions -->
+      <div *ngIf="isViewMode" class="d-flex">
+        <button type="button" class="btn btn-denim me-2" (click)="onCancel()">
+          Back to List
+        </button>
+        <button type="button" class="btn btn-denim" (click)="toggleEditMode()">
+          <i class="fa-solid fa-pen me-2"></i>Edit
+        </button>
+      </div>
+
+      <!-- Edit/Create Mode Actions -->
+      <div *ngIf="!isViewMode" class="d-flex">
+        <button type="button" class="btn btn-denim me-2" (click)="onCancel()">
+          Cancel
+        </button>
+        <button class="btn btn-denim" [disabled]="form.invalid || submitting" type="submit">
+          <span *ngIf="submitting" class="spinner-border spinner-border-sm me-2"></span>
+          {{isEditMode ? 'Update' : 'Create'}} Product
+        </button>
+      </div>
+    </div>
+  </form>
+
+  <!-- Distributor Product Codes Section (edit/view mode only) -->
+  <div *ngIf="isEditMode && product" class="mt-4">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Distributor Product Codes ({{ distributorProductCodes.length }})</h5>
+        <a class="btn btn-sm btn-denim" routerLink="/admin/distributor-product-codes/create" [queryParams]="{ productId: product!.id }">
+          <i class="fas fa-plus me-1"></i>Add
+        </a>
+      </div>
+      <div class="card-body p-0">
+        <div *ngIf="loadingDpcs" class="text-center py-3">
+          <div class="spinner-border spinner-border-sm" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+        <div *ngIf="!loadingDpcs && distributorProductCodes.length === 0" class="text-center py-3 text-muted">
+          No distributor product codes associated with this product.
+        </div>
+        <div *ngIf="!loadingDpcs && distributorProductCodes.length > 0" class="table-responsive">
+          <table class="table table-sm table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Distributor</th>
+                <th>Distributor Code</th>
+                <th>Catch Weight</th>
+                <th>E-Brand</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let dpc of distributorProductCodes">
+                <td>{{ dpc.distributorName || dpc.distributorId }}</td>
+                <td>{{ dpc.distributorCode }}</td>
+                <td>{{ dpc.catchWeight ? 'Yes' : 'No' }}</td>
+                <td>{{ dpc.eBrand ? 'Yes' : 'No' }}</td>
+                <td class="text-end">
+                  <a class="btn btn-sm btn-outline-secondary" [routerLink]="['/admin/distributor-product-codes/edit', dpc.id]" title="Edit">
+                    <i class="fas fa-pen"></i>
+                  </a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+

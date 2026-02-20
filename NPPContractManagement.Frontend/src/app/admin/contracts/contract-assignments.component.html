@@ -1,0 +1,83 @@
+<div class="card mt-3">
+  <div class="card-header">Assignments</div>
+  <div class="card-body">
+    <div *ngIf="error" class="alert alert-danger">{{error}}</div>
+
+    <div class="row">
+      <div class="col-md-6">
+        <h5>Distributors</h5>
+        <form [formGroup]="distributorForm" (ngSubmit)="addDistributor()" class="row g-2 mb-2">
+          <div class="col-4"><input type="number" class="form-control" placeholder="Distributor ID" formControlName="distributorId" [disabled]="readonlyMode"></div>
+          <div class="col-3"><input type="number" class="form-control" placeholder="Version #" formControlName="currentVersionNumber" [disabled]="readonlyMode"></div>
+          <div class="col-3"><input type="text" class="form-control" placeholder="Assigned By" formControlName="assignedBy" [disabled]="readonlyMode"></div>
+          <div class="col-5 mt-2"><input type="date" class="form-control" formControlName="assignedDate" [class.has-value]="distributorForm.get('assignedDate')?.value" [disabled]="readonlyMode"></div>
+          <div class="col-3 mt-2" *ngIf="!readonlyMode"><button class="btn btn-primary w-100" type="submit">Add</button></div>
+        </form>
+        <ul class="list-group">
+          <li class="list-group-item d-flex justify-content-between align-items-center" *ngFor="let d of distributors">
+            <span>#{{d.distributorId}} · v{{d.currentVersionNumber}} · {{d.assignedBy || '-'}} · {{ d.assignedDate ? (d.assignedDate | date:'shortDate') : '-' }}</span>
+            <button class="btn btn-sm btn-outline-danger" (click)="removeDistributor(d.id)" *ngIf="!readonlyMode">Remove</button>
+          </li>
+          <li class="list-group-item text-muted text-center" *ngIf="!distributors.length">No distributors</li>
+        </ul>
+      </div>
+
+      <div class="col-md-6">
+        <h5>Manufacturers</h5>
+        <form [formGroup]="manufacturerForm" (ngSubmit)="addManufacturer()" class="row g-2 mb-2">
+          <div class="col-4"><input type="number" class="form-control" placeholder="Manufacturer ID" formControlName="manufacturerId" [disabled]="readonlyMode"></div>
+          <div class="col-3"><input type="number" class="form-control" placeholder="Version #" formControlName="currentVersionNumber" [disabled]="readonlyMode"></div>
+          <div class="col-3"><input type="text" class="form-control" placeholder="Assigned By" formControlName="assignedBy" [disabled]="readonlyMode"></div>
+          <div class="col-5 mt-2"><input type="date" class="form-control" formControlName="assignedDate" [class.has-value]="manufacturerForm.get('assignedDate')?.value" [disabled]="readonlyMode"></div>
+          <div class="col-3 mt-2" *ngIf="!readonlyMode"><button class="btn btn-primary w-100" type="submit">Add</button></div>
+        </form>
+        <ul class="list-group">
+          <li class="list-group-item d-flex justify-content-between align-items-center" *ngFor="let m of manufacturers">
+            <span>#{{m.manufacturerId}} · v{{m.currentVersionNumber}} · {{m.assignedBy || '-'}} · {{ m.assignedDate ? (m.assignedDate | date:'shortDate') : '-' }}</span>
+            <button class="btn btn-sm btn-outline-danger" (click)="removeManufacturer(m.id)" *ngIf="!readonlyMode">Remove</button>
+          </li>
+          <li class="list-group-item text-muted text-center" *ngIf="!manufacturers.length">No manufacturers</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="row mt-4">
+      <div class="col-md-6">
+        <h5>Operating Companies</h5>
+        <form [formGroup]="opcoForm" (ngSubmit)="addOpCo()" class="row g-2 mb-2">
+          <div class="col-4"><input type="number" class="form-control" placeholder="OpCo ID" formControlName="opCoId" [disabled]="readonlyMode"></div>
+          <div class="col-3"><input type="number" class="form-control" placeholder="Version #" formControlName="currentVersionNumber" [disabled]="readonlyMode"></div>
+          <div class="col-3"><input type="text" class="form-control" placeholder="Assigned By" formControlName="assignedBy" [disabled]="readonlyMode"></div>
+          <div class="col-5 mt-2"><input type="date" class="form-control" formControlName="assignedDate" [class.has-value]="opcoForm.get('assignedDate')?.value" [disabled]="readonlyMode"></div>
+          <div class="col-3 mt-2" *ngIf="!readonlyMode"><button class="btn btn-primary w-100" type="submit">Add</button></div>
+        </form>
+        <ul class="list-group">
+          <li class="list-group-item d-flex justify-content-between align-items-center" *ngFor="let o of opcos">
+            <span>#{{o.opCoId}} · v{{o.currentVersionNumber}} · {{o.assignedBy || '-'}} · {{ o.assignedDate ? (o.assignedDate | date:'shortDate') : '-' }}</span>
+            <button class="btn btn-sm btn-outline-danger" (click)="removeOpCo(o.id)" *ngIf="!readonlyMode">Remove</button>
+          </li>
+          <li class="list-group-item text-muted text-center" *ngIf="!opcos.length">No OpCos</li>
+        </ul>
+      </div>
+
+      <div class="col-md-6">
+        <h5>Industries</h5>
+        <form [formGroup]="industryForm" (ngSubmit)="addIndustry()" class="row g-2 mb-2">
+          <div class="col-4"><input type="number" class="form-control" placeholder="Industry ID" formControlName="industryId" [disabled]="readonlyMode"></div>
+          <div class="col-3"><input type="number" class="form-control" placeholder="Version #" formControlName="currentVersionNumber" [disabled]="readonlyMode"></div>
+          <div class="col-3"><input type="text" class="form-control" placeholder="Assigned By" formControlName="assignedBy" [disabled]="readonlyMode"></div>
+          <div class="col-5 mt-2"><input type="date" class="form-control" formControlName="assignedDate" [class.has-value]="industryForm.get('assignedDate')?.value" [disabled]="readonlyMode"></div>
+          <div class="col-3 mt-2" *ngIf="!readonlyMode"><button class="btn btn-primary w-100" type="submit">Add</button></div>
+        </form>
+        <ul class="list-group">
+          <li class="list-group-item d-flex justify-content-between align-items-center" *ngFor="let i of industries">
+            <span>#{{i.industryId}} · v{{i.currentVersionNumber}} · {{i.assignedBy || '-'}} · {{ i.assignedDate ? (i.assignedDate | date:'shortDate') : '-' }}</span>
+            <button class="btn btn-sm btn-outline-danger" (click)="removeIndustry(i.id)" *ngIf="!readonlyMode">Remove</button>
+          </li>
+          <li class="list-group-item text-muted text-center" *ngIf="!industries.length">No industries</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+

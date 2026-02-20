@@ -1,0 +1,167 @@
+    <main class="container">
+      <!-- Breadcrumb -->
+      <nav aria-label="breadcrumb" id="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a routerLink="/admin">Administration</a></li>
+          <li class="breadcrumb-item"><a routerLink="/admin/industries">Industries</a></li>
+          <li class="breadcrumb-item active">{{isViewMode ? 'View' : (isEditMode ? 'Update' : 'Create')}}</li>
+        </ol>
+      </nav>
+
+      <!-- Header -->
+      <h3>{{isViewMode ? 'View' : (isEditMode ? 'Update' : 'Create')}} Industry</h3>
+
+      <!-- Loading Indicator -->
+      <div *ngIf="loading" class="text-center my-4">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+
+      <!-- Error Message -->
+      <div *ngIf="error" class="alert alert-danger">
+        {{error}}
+      </div>
+
+      <!-- Success Message -->
+      <div *ngIf="successMessage" class="alert alert-success">
+        {{successMessage}}
+      </div>
+
+      <!-- Form -->
+      <div class="row justify-content-center" *ngIf="!loading">
+        <div class="col-6">
+          <form [formGroup]="industryForm" (ngSubmit)="onSubmit()">
+
+            <!-- Id (Read-only, shown only in edit/view mode) -->
+            <div class="mb-3" *ngIf="isEditMode || isViewMode">
+              <label for="id" class="form-label">Id</label>
+              <input
+                type="text"
+                class="form-control"
+                id="id"
+                [value]="industry?.id"
+                readonly
+                disabled>
+            </div>
+
+            <!-- Industry Name -->
+            <div class="mb-3">
+              <label for="name" class="form-label">Industry Name <span class="text-danger">*</span></label>
+              <input
+                type="text"
+                class="form-control"
+                [class.is-invalid]="isFieldInvalid('name')"
+                id="name"
+                formControlName="name"
+                maxlength="200">
+              
+              <div class="invalid-feedback" *ngIf="isFieldInvalid('name')">
+                <div *ngIf="industryForm.get('name')?.errors?.['required']">
+                  Industry name is required.
+                </div>
+                <div *ngIf="industryForm.get('name')?.errors?.['minlength']">
+                  Industry name must be at least 2 characters long.
+                </div>
+                <div *ngIf="industryForm.get('name')?.errors?.['maxlength']">
+                  Industry name cannot exceed 200 characters.
+                </div>
+                <div *ngIf="industryForm.get('name')?.errors?.['pattern']">
+                  Industry name can only contain letters, numbers, spaces, and basic punctuation.
+                </div>
+                <div *ngIf="nameValidationError">
+                  {{nameValidationError}}
+                </div>
+              </div>
+              
+              <small class="form-text text-muted">
+                {{industryForm.get('name')?.value?.length || 0}}/200 characters
+              </small>
+            </div>
+
+            <!-- Description -->
+            <div class="mb-3">
+              <label for="description" class="form-label">Description</label>
+              <textarea 
+                class="form-control"
+                [class.is-invalid]="isFieldInvalid('description')"
+                id="description" 
+                formControlName="description"
+                rows="3"
+                maxlength="1000">
+              </textarea>
+              
+              <div class="invalid-feedback" *ngIf="isFieldInvalid('description')">
+                <div *ngIf="industryForm.get('description')?.errors?.['maxlength']">
+                  Description cannot exceed 1000 characters.
+                </div>
+              </div>
+              
+              <small class="form-text text-muted">
+                {{industryForm.get('description')?.value?.length || 0}}/1000 characters
+              </small>
+            </div>
+
+            <!-- Status -->
+            <div class="mb-3">
+              <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
+              <select
+                id="status"
+                class="form-select"
+                [class.is-invalid]="isFieldInvalid('status')"
+                formControlName="status">
+                <option value="">Select a status</option>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+                <option value="Pending">Pending</option>
+              </select>
+
+              <div class="invalid-feedback" *ngIf="isFieldInvalid('status')">
+                <div *ngIf="industryForm.get('status')?.errors?.['required']">
+                  Status is required.
+                </div>
+              </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="d-flex justify-content-end">
+              <!-- View Mode Actions -->
+              <div *ngIf="isViewMode" class="d-flex">
+                <button
+                  type="button"
+                  class="btn btn-denim me-2"
+                  (click)="onCancel()">
+                  Back to List
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-denim"
+                  (click)="toggleEditMode()">
+                  <i class="fa-solid fa-pen me-2"></i>Edit
+                </button>
+              </div>
+
+              <!-- Edit/Create Mode Actions -->
+              <div *ngIf="!isViewMode" class="d-flex">
+                <button
+                  type="button"
+                  class="btn btn-denim me-2"
+                  (click)="onCancel()">
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  class="btn btn-denim"
+                  [disabled]="industryForm.invalid || submitting || nameValidationError">
+                  <span *ngIf="submitting" class="spinner-border spinner-border-sm me-2"></span>
+                  {{isEditMode ? 'Update' : 'Create'}} Industry
+                </button>
+              </div>
+            </div>
+
+          </form>
+        </div>
+      </div>
+
+    </main>

@@ -1,0 +1,242 @@
+  <main class="container">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" id="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a routerLink="/admin">Administration</a></li>
+        <li class="breadcrumb-item"><a routerLink="/admin/manufacturers">Manufacturers</a></li>
+        <li class="breadcrumb-item active">{{isViewMode ? 'View' : (isEditMode ? 'Update' : 'Create')}}</li>
+      </ol>
+    </nav>
+
+    <!-- Header -->
+    <h3>{{isViewMode ? 'View' : (isEditMode ? 'Update' : 'Create')}} Manufacturer</h3>
+
+    <!-- Loading Indicator -->
+    <div *ngIf="loading" class="text-center my-4">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+
+    <!-- Error Message -->
+    <div *ngIf="error" class="alert alert-danger">
+      {{error}}
+    </div>
+
+    <!-- Success Message -->
+    <div *ngIf="successMessage" class="alert alert-success">
+      {{successMessage}}
+    </div>
+
+    <!-- Form -->
+    <div class="row justify-content-center" *ngIf="!loading">
+      <div class="col-6">
+        <form [formGroup]="form" (ngSubmit)="onSubmit()">
+
+          <!-- Id (Read-only, shown only in edit/view mode) -->
+          <div class="mb-3" *ngIf="isEditMode || isViewMode">
+            <label for="id" class="form-label">Id</label>
+            <input
+              type="text"
+              class="form-control"
+              id="id"
+              [value]="manufacturer?.id"
+              readonly
+              disabled>
+          </div>
+
+          <!-- Name -->
+          <div class="mb-3">
+            <label for="name" class="form-label">Manufacturer Name <span class="text-danger">*</span></label>
+            <input
+              type="text"
+              class="form-control"
+              [class.is-invalid]="isFieldInvalid('name')"
+              id="name"
+              formControlName="name"
+              maxlength="200">
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('name')">
+              <div *ngIf="form.get('name')?.errors?.['required']">Name is required.</div>
+              <div *ngIf="form.get('name')?.errors?.['minlength']">Name must be at least 2 characters.</div>
+              <div *ngIf="form.get('name')?.errors?.['maxlength']">Name cannot exceed 200 characters.</div>
+              <div *ngIf="form.get('name')?.errors?.['pattern']">Only letters, numbers, spaces, and basic punctuation are allowed.</div>
+              <div *ngIf="nameValidationError">{{nameValidationError}}</div>
+            </div>
+            <small class="form-text text-muted">{{form.get('name')?.value?.length || 0}}/200 characters</small>
+          </div>
+
+          <!-- AKA -->
+          <div class="mb-3">
+            <label for="aka" class="form-label">AKA</label>
+            <input id="aka" type="text" class="form-control" formControlName="aka" maxlength="200" />
+          </div>
+
+          <!-- Internal Notes -->
+          <div class="mb-3">
+            <label for="description" class="form-label">Internal Notes</label>
+            <textarea
+              class="form-control"
+              [class.is-invalid]="isFieldInvalid('description')"
+              id="description"
+              formControlName="description"
+              rows="3"
+              maxlength="500">
+            </textarea>
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('description')">
+              <div *ngIf="form.get('description')?.errors?.['maxlength']">Internal Notes cannot exceed 500 characters.</div>
+            </div>
+            <small class="form-text text-muted">{{form.get('description')?.value?.length || 0}}/500 characters</small>
+          </div>
+
+          <!-- Contact Person (searchable single-select from associated users) -->
+          <div class="mb-3">
+            <label class="form-label">Contact Person</label>
+            <input *ngIf="isViewMode" type="text" class="form-control" [value]="selectedContactName || '—'" readonly>
+            <div *ngIf="!isViewMode" class="form-control p-2" (click)="toggleContactPanel()" tabindex="0">
+              <span *ngIf="selectedContactName; else contactPlaceholder">
+                {{ selectedContactName }}
+              </span>
+              <ng-template #contactPlaceholder>
+                <span class="text-muted">Select contact person...</span>
+              </ng-template>
+            </div>
+            <div class="position-relative">
+              <div class="dropdown-menu d-block w-100 p-2" *ngIf="showContactPanel">
+                <input class="form-control mb-2" [value]="contactFilter" (input)="applyContactFilter($any($event.target).value)">
+                <div style="max-height:240px; overflow:auto;">
+                  <div *ngIf="!isEditMode" class="alert alert-info small mb-2">
+                    Save the manufacturer first to assign users and select a contact person.
+                  </div>
+                  <div *ngIf="isEditMode && filteredContacts.length === 0 && !contactFilter" class="text-muted small p-2">
+                    No users associated with this manufacturer yet.
+                  </div>
+                  <div class="form-check" *ngFor="let u of filteredContacts">
+                    <input class="form-check-input" type="radio" name="contactOptions"
+                           [checked]="form.get('contactPersonId')?.value === u.id"
+                           (change)="selectContact(u)">
+                    <label class="form-check-label">{{u.name}} <small class="text-muted">({{u.email}})</small></label>
+                  </div>
+                </div>
+                <div class="d-flex justify-content-between mt-2">
+                  <button type="button" class="btn btn-outline-secondary btn-sm" (click)="form.get('contactPersonId')?.setValue(null); selectedContactName = null; closeContactPanel()">Clear</button>
+                  <button type="button" class="btn btn-denim btn-sm" (click)="closeContactPanel()">Done</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Phone -->
+          <div class="mb-3">
+            <label for="phoneNumber" class="form-label">Company Phone Number</label>
+            <input id="phoneNumber" type="text" class="form-control" formControlName="phoneNumber" maxlength="20" />
+          </div>
+
+          <!-- Website -->
+          <div class="mb-3">
+            <label for="website" class="form-label">Website</label>
+            <input id="website" type="text" class="form-control" formControlName="website" maxlength="200" />
+          </div>
+
+          <!-- Address -->
+          <div class="mb-3 mt-3">
+            <label for="address" class="form-label">Address</label>
+            <input id="address" type="text" class="form-control" formControlName="address" maxlength="500" />
+          </div>
+
+          <!-- City/State/Zip -->
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label for="city" class="form-label">City</label>
+              <input id="city" type="text" class="form-control" formControlName="city" maxlength="100" />
+            </div>
+            <div class="col-md-4">
+              <label for="state" class="form-label">State</label>
+              <select id="state" class="form-select" formControlName="state">
+                <option value="">Select state</option>
+                <option *ngFor="let state of usStates" [value]="state">{{state}}</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label for="zipCode" class="form-label">Zip Code</label>
+              <input id="zipCode" type="text" class="form-control" formControlName="zipCode" maxlength="20" />
+            </div>
+          </div>
+
+          <!-- Country -->
+          <div class="mb-3 mt-3">
+            <label for="country" class="form-label">Country</label>
+            <input id="country" type="text" class="form-control" formControlName="country" maxlength="100" />
+          </div>
+
+          <!-- Primary Broker (searchable single-select) -->
+          <div class="mb-3">
+            <label class="form-label">Primary Broker</label>
+            <div class="form-control p-2" (click)="toggleBrokerPanel()" tabindex="0">
+              <span *ngIf="selectedBrokerName; else brokerPlaceholder">
+                {{ selectedBrokerName }}
+              </span>
+              <ng-template #brokerPlaceholder>
+                <span class="text-muted">Select primary broker...</span>
+              </ng-template>
+            </div>
+            <div class="position-relative">
+              <div class="dropdown-menu d-block w-100 p-2" *ngIf="showBrokerPanel">
+                <input class="form-control mb-2" [value]="brokerFilter" (input)="applyBrokerFilter($any($event.target).value)">
+                <div style="max-height:240px; overflow:auto;">
+                  <div class="form-check" *ngFor="let u of filteredBrokers">
+                    <input class="form-check-input" type="radio" name="brokerOptions"
+                           [checked]="form.get('primaryBrokerId')?.value === u.id"
+                           (change)="selectBroker(u)">
+                    <label class="form-check-label">{{u.name}} <small class="text-muted">({{u.email}})</small></label>
+                  </div>
+                </div>
+                <div class="d-flex justify-content-between mt-2">
+                  <button type="button" class="btn btn-outline-secondary btn-sm" (click)="form.get('primaryBrokerId')?.setValue(null); selectedBrokerName = null; closeBrokerPanel()">Clear</button>
+                  <button type="button" class="btn btn-denim btn-sm" (click)="closeBrokerPanel()">Done</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Status -->
+          <div class="mb-3">
+            <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
+            <select id="status" class="form-select" [class.is-invalid]="isFieldInvalid('status')" formControlName="status">
+              <option value="">Select a status</option>
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+              <option value="Pending">Pending</option>
+            </select>
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('status')">
+              <div *ngIf="form.get('status')?.errors?.['required']">Status is required.</div>
+            </div>
+          </div>
+
+          <!-- Form Actions -->
+          <div class="d-flex justify-content-end">
+            <!-- View Mode Actions -->
+            <div *ngIf="isViewMode" class="d-flex">
+              <button type="button" class="btn btn-denim me-2" (click)="onCancel()">
+                Back to List
+              </button>
+              <button type="button" class="btn btn-denim" (click)="toggleEditMode()">
+                <i class="fa-solid fa-pen me-2"></i>Edit
+              </button>
+            </div>
+
+            <!-- Edit/Create Mode Actions -->
+            <div *ngIf="!isViewMode" class="d-flex">
+              <button type="button" class="btn btn-denim me-2" (click)="onCancel()">
+                Cancel
+              </button>
+              <button type="submit" class="btn btn-denim" [disabled]="form.invalid || submitting || nameValidationError">
+                <span *ngIf="submitting" class="spinner-border spinner-border-sm me-2"></span>
+                {{isEditMode ? 'Update' : 'Create'}} Manufacturer
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+

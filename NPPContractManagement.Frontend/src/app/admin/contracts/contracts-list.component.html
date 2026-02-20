@@ -1,0 +1,365 @@
+    <main class="container">
+      <!-- Breadcrumb -->
+      <nav aria-label="breadcrumb" id="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a routerLink="/admin">Administration</a></li>
+          <li class="breadcrumb-item active">Contracts</li>
+        </ol>
+      </nav>
+
+      <!-- Header -->
+      <div>
+        <h3 class="d-flex align-items-center">
+          <span>Contracts</span>
+          <span *ngIf="canModify()">
+            <a routerLink="/admin/contracts/create" class="fs-3 ms-2 align-middle" title="Add new contract">
+              <i class="fa-solid fa-plus"></i>
+            </a>
+          </span>
+        </h3>
+
+        <!-- Search and Filters -->
+        <form>
+          <div class="d-flex">
+            <!-- Search Input -->
+            <input
+              type="search"
+              class="form-control flex-fill me-2"
+              placeholder="Search by name or foreign ID"
+              [(ngModel)]="searchTerm"
+              (input)="onSearchChange($any($event.target).value || '')"
+              name="search">
+
+
+            <!-- Advanced Filters Toggle -->
+            <a href="#" class="fs-3 me-2" data-bs-toggle="modal" data-bs-target="#ext-filter-modal">
+              <i class="fa-solid fa-filter"></i>
+            </a>
+
+            <!-- Actions Dropdown -->
+            <div class="dropdown">
+              <a href="#" data-bs-toggle="dropdown" aria-expanded="false" class="fs-3">
+                <i class="fa-solid fa-bars"></i>
+              </a>
+              <ul class="dropdown-menu">
+                <li>
+                  <button
+                    type="button"
+                    class="dropdown-item"
+                    (click)="exportToExcel()"
+                    [disabled]="loading">
+                    <i class="fa-solid fa-download"></i> Export Results
+                  </button>
+                </li>
+                <li *ngIf="canUseBulkRenewal()">
+                  <hr class="dropdown-divider">
+                </li>
+                <li *ngIf="canUseBulkRenewal()">
+                  <button
+                    type="button"
+                    class="dropdown-item"
+                    (click)="openBulkRenewalDialog()"
+                    [disabled]="loading || selectedItems.size === 0">
+                    <i class="fa-solid fa-rotate"></i> Create Renewal Proposals
+                    <span *ngIf="selectedItems.size > 0" class="badge bg-primary ms-2">{{ selectedItems.size }}</span>
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Filter Pills -->
+          <div class="d-flex mt-2 flex-wrap align-items-center">
+
+            <span
+              *ngIf="searchTerm"
+              class="badge text-bg-denim filter-pill clickable me-2 mb-2"
+              (click)="onSearchChange('')">
+              Search: {{searchTerm}} ✕
+            </span>
+            <span
+              *ngIf="!isManufacturerUser() && manufacturerFilter"
+              class="badge text-bg-denim filter-pill clickable me-2 mb-2"
+              (click)="advancedFilterState['manufacturerId']=''; applyAdvancedFilters()">
+              Manufacturer: {{getManufacturerNameById(manufacturerFilter)}} ✕
+            </span>
+            <span
+              *ngIf="industryFilter"
+              class="badge text-bg-denim filter-pill clickable me-2 mb-2"
+              (click)="advancedFilterState['industryId']=''; applyAdvancedFilters()">
+              Industry: {{getIndustryNameById(industryFilter)}} ✕
+            </span>
+            <span
+              *ngIf="startDateFilter"
+              class="badge text-bg-denim filter-pill clickable me-2 mb-2"
+              (click)="advancedFilterState['startDate']=''; applyAdvancedFilters()">
+              Start Date: {{startDateFilter}} ✕
+            </span>
+            <span
+              *ngIf="endDateFilter"
+              class="badge text-bg-denim filter-pill clickable me-2 mb-2"
+              (click)="advancedFilterState['endDate']=''; applyAdvancedFilters()">
+              End Date: {{endDateFilter}} ✕
+            </span>
+            <button
+              *ngIf="searchTerm"
+              type="button"
+              class="badge text-bg-denim filter-pill clickable me-2 mb-2"
+              (click)="clearAllFilters()">
+              Clear All Filters
+            </button>
+            <button
+              *ngIf="manufacturerFilter || industryFilter || startDateFilter || endDateFilter"
+              type="button"
+              class="badge text-bg-denim filter-pill clickable me-2 mb-2"
+              (click)="clearAdvancedFilters()">
+              Clear Advanced Filters
+            </button>
+          </div>
+
+          <!-- Advanced Filters Modal -->
+          <div class="modal fade" id="ext-filter-modal">
+            <div class="modal-dialog modal-dialog-scrollable">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h1 class="modal-title fs-5 fc-denim">Additional Filters</h1>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <div class="mb-3" *ngIf="!isManufacturerUser()">
+                    <label class="form-label">Manufacturer</label>
+                    <select class="form-select" [(ngModel)]="advancedFilterState['manufacturerId']" [ngModelOptions]="{standalone: true}">
+                      <option *ngFor="let m of manufacturers" [value]="m.id">{{m.name}}</option>
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Industry</label>
+                    <select class="form-select" [(ngModel)]="advancedFilterState['industryId']" [ngModelOptions]="{standalone: true}">
+                      <option *ngFor="let i of industries" [value]="i.id">{{i.name}}</option>
+                    </select>
+                  </div>
+                  <div class="row">
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label">Start Date</label>
+                      <input type="date" class="form-control" [(ngModel)]="advancedFilterState['startDate']" [class.has-value]="advancedFilterState['startDate']" [ngModelOptions]="{standalone: true}" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label">End Date</label>
+                      <input type="date" class="form-control" [(ngModel)]="advancedFilterState['endDate']" [class.has-value]="advancedFilterState['endDate']" [ngModelOptions]="{standalone: true}" />
+                    </div>
+                  </div>
+                </div>
+                <div class="modal-footer d-flex justify-content-between">
+                  <button type="button" class="btn btn-outline-secondary" (click)="clearAdvancedFilters()">Clear All Advanced Filters</button>
+                  <div>
+                    <button type="button" class="btn btn-denim me-2" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-denim" (click)="applyAdvancedFilters()" data-bs-dismiss="modal">Apply Filters</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+
+        <!-- Loading Indicator -->
+        <div *ngIf="loading" class="text-center my-4">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+
+        <!-- Error Message -->
+        <div *ngIf="error" class="alert alert-danger mt-3">
+          {{error}}
+        </div>
+
+        <!-- Data Table -->
+        <div class="table-responsive mt-3" *ngIf="!loading">
+          <table class="table">
+            <thead>
+              <tr>
+                <!-- Checkbox column for bulk selection -->
+                <th *ngIf="canUseBulkRenewal()" class="text-center" style="width: 50px;">
+                  <input
+                    type="checkbox"
+                    class="form-check-input"
+                    [checked]="selectAll"
+                    (click)="onSelectAll()"
+                    title="Select all on this page">
+                </th>
+                <th
+                  *ngFor="let column of columns"
+                  [class]="column.width ? 'min' : ''"
+                  [style.cursor]="column.sortable ? 'pointer' : 'default'"
+                  (click)="column.sortable ? onSort(column.key) : null">
+                  {{column.label}}
+                  <i
+                    *ngIf="column.sortable"
+                    class="fa-solid ms-1"
+                    [class]="getSortIcon(column.key)">
+                  </i>
+                </th>
+                <th class="text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of paginatedItems" [class.table-active]="isSelected(item)">
+                <!-- Checkbox cell for bulk selection -->
+                <td *ngIf="canUseBulkRenewal()" class="text-center">
+                  <input
+                    type="checkbox"
+                    class="form-check-input"
+                    [checked]="isSelected(item)"
+                    (click)="toggleSelection(item)"
+                    title="Select this contract">
+                </td>
+                <td>{{item.id}}</td>
+                <td>{{item.name}}</td>
+                <td>{{getManufacturerName(item)}}</td>
+                <td>{{getOpCoNames(item)}}</td>
+                <td>
+                  <ng-container *ngIf="deriveProposalId(item) as pid; else noProposal">
+                    <a [routerLink]="['/admin/proposals', pid]">#{{pid}} {{item.proposalTitle || ''}}</a>
+                  </ng-container>
+                  <ng-template #noProposal>-</ng-template>
+                </td>
+
+                <td>{{item.foreignContractId || '-'}}</td>
+                <td>{{formatDateRange(item.startDate, item.endDate)}}</td>
+                <td>
+                  <ng-container *ngIf="getDaysUntilExpiry(item) < 0; else remainingTpl">
+                    <span class="text-danger">Expired ({{Math.abs(getDaysUntilExpiry(item))}} days ago)</span>
+                  </ng-container>
+                  <ng-template #remainingTpl>
+                    <span>{{getDaysUntilExpiry(item)}} days remaining</span>
+                  </ng-template>
+                </td>
+
+                <td>
+                  <div class="d-flex justify-content-center">
+                    <a
+                      [routerLink]="canModify() ? ['/admin/contracts/edit', item.id] : ['/admin/contracts/view', item.id]"
+                      class="me-2 fs-6 icon"
+                      title="View Contract">
+                      <i class="fa-solid fa-eye"></i>
+                    </a>
+                    <a
+                      *ngIf="canModify()"
+                      href="#"
+                      class="fs-6 icon text-danger"
+                      (click)="openDeleteModal(item); $event.preventDefault()"
+                      title="Delete Contract">
+                      <i class="fa-solid fa-trash-can"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="d-flex flex-row-reverse mt-3" *ngIf="!loading && paginatedItems.length > 0">
+          <ul class="pagination">
+            <li class="page-item" [class.disabled]="pagination.currentPage === 1">
+              <a href="#" class="page-link" (click)="onPageChange(1); $event.preventDefault()">&lt;&lt;</a>
+            </li>
+            <li class="page-item" [class.disabled]="pagination.currentPage === 1">
+              <a href="#" class="page-link" (click)="onPageChange(pagination.currentPage - 1); $event.preventDefault()">&lt;</a>
+            </li>
+            <li
+              *ngFor="let page of getPageNumbers()"
+              class="page-item"
+              [class.active]="page === pagination.currentPage"
+              [class.disabled]="page === -1">
+              <a
+                href="#"
+                class="page-link"
+                (click)="page !== -1 ? onPageChange(page) : null; $event.preventDefault()">
+                {{page === -1 ? '...' : page}}
+              </a>
+            </li>
+            <li class="page-item" [class.disabled]="pagination.currentPage === pagination.totalPages">
+              <a href="#" class="page-link" (click)="onPageChange(pagination.currentPage + 1); $event.preventDefault()">&gt;</a>
+            </li>
+            <li class="page-item" [class.disabled]="pagination.currentPage === pagination.totalPages">
+              <a href="#" class="page-link" (click)="onPageChange(pagination.totalPages); $event.preventDefault()">&gt;&gt;</a>
+            </li>
+          </ul>
+
+          <div class="me-5 align-self-center">
+            <span>{{pagination.startIndex + 1}} to {{Math.min(pagination.endIndex + 1, pagination.totalItems)}} of {{pagination.totalItems}}</span>
+          </div>
+
+          <div class="me-5 align-self-center">
+            <label class="form-label m-0" for="pageSize">Rows per page:</label>
+            <select
+              class="m-0 p-0 border-top-0 border-start-0 border-end-0 border-bottom-1"
+              [(ngModel)]="pagination.pageSize"
+              [ngModelOptions]="{standalone: true}"
+              (ngModelChange)="onPageSizeChange(+($event))"
+              name="pageSize">
+              <option [ngValue]="1">1</option>
+              <option [ngValue]="2">2</option>
+              <option [ngValue]="5">5</option>
+              <option [ngValue]="10">10</option>
+              <option [ngValue]="20">20</option>
+              <option [ngValue]="50">50</option>
+              <option [ngValue]="100">100</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- No Data Message -->
+        <div *ngIf="!loading && paginatedItems.length === 0" class="text-center my-5">
+          <p class="text-muted">No contracts found.</p>
+          <a routerLink="/admin/contracts/create" class="btn btn-denim">
+            <i class="fa-solid fa-plus me-2"></i>Add First Contract
+          </a>
+        </div>
+      </div>
+      <!-- Delete Confirmation Modal -->
+      <div *ngIf="showDeleteModal" class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Confirm Deletion</h5>
+              <button type="button" class="btn-close" aria-label="Close" (click)="closeDeleteModal()"></button>
+            </div>
+            <div class="modal-body">
+              <p>Are you sure you want to delete?</p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-denim" (click)="closeDeleteModal()">Cancel</button>
+              <button type="button" class="btn btn-denim" (click)="confirmDelete()">Delete</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Backdrop -->
+      <div *ngIf="showDeleteModal" class="modal-backdrop fade show"></div>
+
+      <!-- Bulk Renewal Confirmation Modal -->
+      <div *ngIf="showBulkRenewalModal" class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Confirm Bulk Renewal</h5>
+              <button type="button" class="btn-close" aria-label="Close" (click)="closeBulkRenewalModal()"></button>
+            </div>
+            <div class="modal-body">
+              <p>Are you sure you want to create <strong>{{ bulkRenewalCount }}</strong> renewal proposal{{ bulkRenewalCount > 1 ? 's' : '' }}?</p>
+              <p class="text-muted mb-0">This will create new proposals based on the selected contracts with their current pricing.</p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" (click)="closeBulkRenewalModal()">Cancel</button>
+              <button type="button" class="btn btn-denim" (click)="confirmBulkRenewal()">
+                <i class="fas fa-check me-2"></i>Create Proposals
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Backdrop for Bulk Renewal Modal -->
+      <div *ngIf="showBulkRenewalModal" class="modal-backdrop fade show"></div>
+    </main>

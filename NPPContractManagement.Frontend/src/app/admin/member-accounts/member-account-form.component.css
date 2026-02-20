@@ -1,0 +1,5 @@
+.fc-denim { color: var(--denim-color, #002D40); }
+.btn-denim { background-color: var(--denim-color, #002D40); color: #fff; }
+.btn-denim:hover { filter: brightness(0.95); }
+.clickable { cursor: pointer; }
+

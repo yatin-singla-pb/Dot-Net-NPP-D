@@ -1,0 +1,507 @@
+<main class="container proposal-page" id="proposal_page_content">
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb" id="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a routerLink="/admin/proposals">Proposals</a></li>
+      <li class="breadcrumb-item active">Proposal Details</li>
+    </ol>
+  </nav>
+
+  <div class="d-flex justify-content-between align-items-start">
+    <h3>Proposal Details</h3>
+    <div class="dropdown">
+      <button class="btn btn-outline-secondary btn-sm" type="button" id="actionsMenu" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="fas fa-bars"></i>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="actionsMenu">
+        <li>
+          <a class="dropdown-item" routerLink="/admin/proposals">
+            <i class="fas fa-arrow-left me-2"></i>Back to List
+          </a>
+        </li>
+        <li><hr class="dropdown-divider"></li>
+        <li>
+          <button class="dropdown-item" (click)="onEdit()" [disabled]="!canEdit() || submitting">
+            <i class="fas fa-edit me-2"></i>Edit
+          </button>
+        </li>
+        <li>
+          <button class="dropdown-item" (click)="onClone()" [disabled]="submitting">
+            <i class="fas fa-copy me-2"></i>Clone
+          </button>
+        </li>
+        <li *ngIf="canAccept()">
+          <a class="dropdown-item" [routerLink]="['/admin/proposals', proposal?.id, 'awards']">
+            <i class="fas fa-award me-2"></i>Review & Award Pricing
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2">Loading proposal details...</p>
+  </div>
+
+  <!-- Alerts -->
+  <div *ngIf="error" class="alert alert-danger" role="alert">
+    <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
+  </div>
+  <div *ngIf="successMessage" class="alert alert-success" role="alert">
+    <i class="fas fa-check-circle me-2"></i>{{ successMessage }}
+  </div>
+
+  <!-- Review banner for Submitted proposals -->
+  <div *ngIf="canShowReviewBanner()" class="alert alert-info d-flex align-items-center" role="alert">
+    <i class="fas fa-info-circle me-2"></i>
+    <div *ngIf="!isManufacturer(); else manufacturerSubmittedMessage">
+      Ready for review. You can <strong>Approve</strong> to create a contract or <strong>Reject</strong> to complete without a contract.
+    </div>
+    <ng-template #manufacturerSubmittedMessage>
+      <div>
+        Your proposal has been <strong>submitted</strong> and is pending NPP review.
+      </div>
+    </ng-template>
+  </div>
+
+  <!-- Conflict Detection Banner -->
+  <div *ngIf="conflictResult?.hasConflicts && !isManufacturer()" class="alert alert-danger mb-3" role="alert">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <div>
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <strong>Contract Conflicts Detected ({{ conflictResult!.totalConflictCount }})</strong>
+        <span class="ms-2 text-muted small">Resolve all conflicts before accepting this proposal.</span>
+      </div>
+      <button class="btn btn-outline-danger btn-sm" (click)="loadConflicts()" [disabled]="conflictLoading">
+        <span *ngIf="conflictLoading" class="spinner-border spinner-border-sm me-1"></span>
+        <i *ngIf="!conflictLoading" class="fas fa-sync-alt me-1"></i>Re-check
+      </button>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-sm table-bordered mb-0 bg-white">
+        <thead class="table-light">
+          <tr>
+            <th>Product Code</th>
+            <th>Product Name</th>
+            <th>Conflicting Contract</th>
+            <th>Manufacturer</th>
+            <th>OpCos</th>
+            <th>Overlap Period</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let c of conflictResult!.conflicts">
+            <td>{{ c.manufacturerProductCode || '—' }}</td>
+            <td>{{ c.productName }}</td>
+            <td>
+              <a [routerLink]="['/admin/contracts', c.conflictingContractId]" class="text-decoration-none">
+                {{ c.conflictingContractName }}
+              </a>
+              <small class="text-muted d-block" *ngIf="c.conflictingContractForeignId">{{ c.conflictingContractForeignId }}</small>
+            </td>
+            <td>{{ c.conflictingManufacturerName || '—' }}</td>
+            <td>
+              <span *ngIf="c.isNationwideConflict && c.overlappingOpCos.length === 0" class="badge bg-warning text-dark">Nationwide</span>
+              <span *ngFor="let opco of c.overlappingOpCos" class="badge bg-secondary me-1">{{ opco.opCoName }}</span>
+            </td>
+            <td class="text-nowrap">{{ formatDate(c.overlapStartDate) }} - {{ formatDate(c.overlapEndDate) }}</td>
+            <td>
+              <button class="btn btn-outline-warning btn-sm" (click)="suspendConflictingContract(c.conflictingContractId)" title="Suspend this contract to resolve the conflict">
+                <i class="fas fa-pause-circle me-1"></i>Suspend
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Conflict loading indicator -->
+  <div *ngIf="conflictLoading && !conflictResult" class="alert alert-light mb-3">
+    <span class="spinner-border spinner-border-sm me-2"></span>Checking for pricing conflicts...
+  </div>
+
+  <!-- Association Badges -->
+  <div *ngIf="!loading && proposal" class="mb-3">
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+      <!-- Distributor Badges -->
+      <span class="badge text-bg-denim rounded-pill" *ngFor="let d of getDistributorObjects()">
+        {{d.name}}
+      </span>
+      <!-- Industry Badges -->
+      <span class="badge text-bg-denim rounded-pill" *ngFor="let i of getIndustryObjects()">
+        {{i.name}}
+      </span>
+      <!-- OpCo Badges -->
+      <span class="badge text-bg-denim rounded-pill" *ngFor="let o of getOpcoObjects()">
+        {{o.name}}
+      </span>
+    </div>
+  </div>
+
+  <!-- Proposal Details -->
+  <div *ngIf="!loading && proposal" id="proposal_panels_container">
+        <!-- Basic Information -->
+        <div class="card mb-4 panel-basic-information" id="basic_information_panel">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Basic Information</h5>
+            <span class="badge fs-6" [class]="getStatusBadgeClass(proposal.proposalStatusId)">
+              {{ getProposalStatusName(proposal.proposalStatusId) }}
+            </span>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label fw-bold info-label">Title</label>
+                <p class="mb-0 info-value">{{ proposal.title }}</p>
+              </div>
+            </div>
+            <div class="basic-info-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; column-gap: 24px; align-items: start; margin-top: 1rem;">
+              <div class="info-column" style="display: flex; flex-direction: column; gap: 12px; min-width: 0;">
+                <div>
+                  <label class="form-label fw-bold d-block mb-1 info-label">Manufacturer</label>
+                  <p class="mb-0 info-value" style="line-height: 1.4; word-break: break-word; overflow-wrap: anywhere;">{{ proposal.manufacturerId ? getManufacturerName(proposal.manufacturerId) : '—' }}</p>
+                </div>
+                <div>
+                  <label class="form-label fw-bold d-block mb-1 info-label">Distributors</label>
+                  <p class="mb-0 info-value multiline" style="line-height: 1.4; word-break: break-word; overflow-wrap: anywhere; max-width: 100%;">{{ getDistributorNames().length > 0 ? getDistributorNames().join(', ') : '—' }}</p>
+                </div>
+              </div>
+              <div class="info-column" style="display: flex; flex-direction: column; gap: 12px; min-width: 0;">
+                <div>
+                  <label class="form-label fw-bold d-block mb-1 info-label">Type</label>
+                  <p class="mb-0 info-value" style="line-height: 1.4; word-break: break-word; overflow-wrap: anywhere;">{{ getProposalTypeName(proposal.proposalTypeId) }}</p>
+                </div>
+                <div>
+                  <label class="form-label fw-bold d-block mb-1 info-label">Industries</label>
+                  <p class="mb-0 info-value multiline" style="line-height: 1.4; word-break: break-word; overflow-wrap: anywhere; max-width: 100%;">{{ getIndustryNames().length > 0 ? getIndustryNames().join(', ') : '—' }}</p>
+                </div>
+              </div>
+              <div class="info-column" style="display: flex; flex-direction: column; gap: 12px; min-width: 0;">
+                <div>
+                  <label class="form-label fw-bold d-block mb-1 info-label">ID</label>
+                  <p class="mb-0 info-value" style="line-height: 1.4; word-break: break-word; overflow-wrap: anywhere;">#{{ proposal.id }}</p>
+                </div>
+                <div>
+                  <label class="form-label fw-bold d-block mb-1 info-label">OpCos</label>
+                  <p class="mb-0 info-value multiline" style="line-height: 1.4; word-break: break-word; overflow-wrap: anywhere; max-width: 100%;">{{ getOpcoNames().length > 0 ? getOpcoNames().join(', ') : '—' }}</p>
+                </div>
+              </div>
+            </div>
+            <div class="basic-info-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; column-gap: 24px; align-items: start; margin-top: 1rem;">
+              <div class="info-column" style="display: flex; flex-direction: column; gap: 12px; min-width: 0;">
+                <div *ngIf="proposal.startDate">
+                  <label class="form-label fw-bold d-block mb-1 info-label">Start Date</label>
+                  <p class="mb-0 info-value" style="line-height: 1.4; word-break: break-word; overflow-wrap: anywhere;">{{ formatDate(proposal.startDate) }}</p>
+                </div>
+              </div>
+              <div class="info-column" style="display: flex; flex-direction: column; gap: 12px; min-width: 0;">
+                <div *ngIf="proposal.endDate">
+                  <label class="form-label fw-bold d-block mb-1 info-label">End Date</label>
+                  <p class="mb-0 info-value" style="line-height: 1.4; word-break: break-word; overflow-wrap: anywhere;">{{ formatDate(proposal.endDate) }}</p>
+                </div>
+              </div>
+              <div class="info-column" style="display: flex; flex-direction: column; gap: 12px; min-width: 0;">
+                <div *ngIf="proposal.dueDate">
+                  <label class="form-label fw-bold d-block mb-1 info-label">Due Date</label>
+                  <p class="mb-0 info-value" style="line-height: 1.4; word-break: break-word; overflow-wrap: anywhere;">{{ formatDate(proposal.dueDate) }}</p>
+                </div>
+              </div>
+              <div class="info-column" style="display: flex; flex-direction: column; gap: 12px; min-width: 0;">
+                <div *ngIf="proposal.internalNotes">
+                  <label class="form-label fw-bold d-block mb-1 info-label">Internal Notes</label>
+                  <p class="mb-0 info-value" style="line-height: 1.4; word-break: break-word; overflow-wrap: anywhere;">{{ proposal.internalNotes }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rejection reason (when completed with a reason) -->
+        <div *ngIf="getProposalStatusName(proposal.proposalStatusId) === 'Completed' && proposal.rejectReason" class="alert alert-warning d-flex align-items-start">
+          <i class="fas fa-comment-dots me-2 mt-1"></i>
+          <div>
+            <div class="fw-bold">Rejection reason</div>
+            <div class="mb-0">{{ proposal.rejectReason }}</div>
+          </div>
+        </div>
+
+  <!-- Products -->
+  <div *ngIf="!loading && proposal" class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">Products ({{ proposal.products.length }})</h5>
+    </div>
+    <div class="card-body">
+  <div *ngIf="showApproveConfirm">
+    <div class="modal-backdrop fade show"></div>
+          <div class="modal d-block" tabindex="-1" role="dialog" aria-modal="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Confirm Approval</h5>
+                  <button type="button" class="btn-close" aria-label="Close" (click)="cancelApproveConfirm()"></button>
+                </div>
+                <div class="modal-body">
+                  <p>Approve this proposal and create a contract with the following summary?</p>
+                  <ul class="mb-3">
+                    <li>Products: {{ proposal ? proposal.products.length : 0 }}</li>
+                    <li>Total value: <strong>{{ formatCurrency(getTotalProposedValue()) }}</strong></li>
+                    <li>Date range: {{ formatDate(proposal ? (proposal.startDate ?? null) : null) }} - {{ formatDate(proposal ? (proposal.endDate ?? null) : null) }}</li>
+                  </ul>
+                  <div class="form-check">
+                    <input id="openContractAfterCreate" class="form-check-input" type="checkbox" [(ngModel)]="openContractAfterCreate">
+                    <label class="form-check-label" for="openContractAfterCreate">Open the contract after creation</label>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" (click)="cancelApproveConfirm()">Cancel</button>
+                  <button type="button" class="btn btn-primary" (click)="confirmApprove()" [disabled]="submitting">
+                    <span *ngIf="submitting" class="spinner-border spinner-border-sm me-2"></span>
+                    Approve and create contract
+                  </button>
+                </div>
+              </div>
+            </div>
+    </div>
+  </div>
+
+        <!-- Reject Confirmation Modal -->
+  <div *ngIf="showRejectConfirm">
+    <div class="modal-backdrop fade show"></div>
+          <div class="modal d-block" tabindex="-1" role="dialog" aria-modal="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Confirm Rejection</h5>
+                  <button type="button" class="btn-close" aria-label="Close" (click)="cancelRejectConfirm()"></button>
+                </div>
+                <div class="modal-body">
+                  <p>Are you sure you want to reject this proposal? This will complete the proposal without creating a contract.</p>
+                  <div class="mb-2">
+                    <label class="form-label">Reason (optional)</label>
+                    <textarea class="form-control" rows="3" [(ngModel)]="rejectReason"></textarea>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" (click)="cancelRejectConfirm()">Cancel</button>
+                  <button type="button" class="btn btn-danger" (click)="confirmReject()" [disabled]="submitting">
+                    <span *ngIf="submitting" class="spinner-border spinner-border-sm me-2"></span>
+                    Reject
+                  </button>
+                </div>
+              </div>
+            </div>
+    </div>
+  </div>
+          <!-- Search and Filter Controls -->
+          <div class="row g-3 mb-3" *ngIf="proposal.products.length > 0">
+            <div class="col-md-4">
+              <input
+                type="text"
+                class="form-control"
+                [(ngModel)]="productSearchTerm"
+                [ngModelOptions]="{standalone: true}"
+                (ngModelChange)="onProductSearch($event)">
+            </div>
+            <div class="col-md-3">
+              <select
+                class="form-select"
+                [(ngModel)]="productFilterPriceType"
+                [ngModelOptions]="{standalone: true}"
+                (ngModelChange)="onPriceTypeFilter($event)">
+                <option [ngValue]="null">All Price Types</option>
+                <option *ngFor="let pt of priceTypes" [ngValue]="pt.id">{{ pt.name }}</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <select
+                class="form-select"
+                [(ngModel)]="productFilterStatus"
+                [ngModelOptions]="{standalone: true}"
+                (ngModelChange)="onStatusFilter($event)">
+                <option [ngValue]="null">All Statuses</option>
+                <option *ngFor="let status of productProposalStatuses" [ngValue]="status.id">{{ status.name }}</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <button type="button" class="btn btn-outline-secondary w-100" (click)="clearFilters()">
+                <i class="fas fa-times me-1"></i>Clear
+              </button>
+            </div>
+          </div>
+
+          <div *ngIf="proposal.products.length === 0" class="text-center py-4 text-muted">
+            <i class="fas fa-box-open fa-2x mb-2"></i>
+            <p>No products in this proposal.</p>
+          </div>
+
+          <div *ngIf="proposal.products.length > 0 && filteredProducts.length === 0" class="text-center py-4 text-muted">
+            <i class="fas fa-search fa-2x mb-2"></i>
+            <p>No products match your filters.</p>
+          </div>
+
+          <div *ngIf="proposal.products.length > 0 && filteredProducts.length > 0">
+            <div *ngFor="let product of paginatedProducts; let i = index" class="card mb-3 border">
+              <!-- Product Card Header -->
+              <div class="card-header d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1 me-3" style="min-width: 0;">
+                  <ng-container *ngIf="getProductById(product.productId) as prod; else defaultTitle">
+                    <!-- Row 1: Product Code - Brand - Pack - Name -->
+                    <div class="text-truncate" [title]="getProductHeaderTitle(product.productId)">
+                      <strong>{{ prod.manufacturerProductCode || 'N/A' }}</strong>
+                      <span *ngIf="prod.brand"> - {{ prod.brand }}</span>
+                      <span *ngIf="prod.packSize"> - {{ prod.packSize }}</span>
+                      <span *ngIf="prod.name || prod.description"> - {{ prod.name || prod.description }}</span>
+                    </div>
+                    <!-- Row 2: GTIN & Notes with Icons -->
+                    <div class="text-muted small mt-1 text-truncate">
+                      <span *ngIf="prod.gtin || prod.GTIN" class="me-3" [title]="'GTIN: ' + (prod.gtin || prod.GTIN)">
+                        <i class="fas fa-barcode me-1"></i>{{ prod.gtin || prod.GTIN }}
+                      </span>
+                      <span *ngIf="prod.notes || prod.Notes" [title]="'Notes: ' + (prod.notes || prod.Notes)">
+                        <i class="fas fa-sticky-note me-1"></i>{{ prod.notes || prod.Notes }}
+                      </span>
+                    </div>
+                  </ng-container>
+                  <ng-template #defaultTitle>
+                    <h5 class="mb-0">{{ getProductName(product.productId) }}</h5>
+                  </ng-template>
+                </div>
+                <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                  <span *ngIf="hasProductConflict(product.productId)" class="badge bg-danger" title="This product has pricing conflicts with active contracts">
+                    <i class="fas fa-exclamation-triangle me-1"></i>Conflict
+                  </span>
+                  <ng-container *ngIf="getProductById(product.productId) as prod">
+                    <span class="badge" [ngClass]="getProductStatusBadgeClass(prod.status)" [title]="'Master Product Status: ' + prod.status">
+                      {{ prod.status }}
+                    </span>
+                  </ng-container>
+                  <span *ngIf="product.productProposalStatusId" class="badge" [ngClass]="getProductProposalStatusBadgeClass(product.productProposalStatusId)" [title]="'Proposal Product Status'">
+                    {{ getProductProposalStatusName(product.productProposalStatusId) }}
+                  </span>
+                </div>
+              </div>
+
+              <div class="card-body p-3">
+                <!-- Product Details -->
+                <div class="row g-2 align-items-end">
+                  <div class="col-md-3">
+                    <label class="form-label">Price Type</label>
+                    <input type="text" class="form-control" [value]="product.priceTypeId ? getPriceTypeName(product.priceTypeId) : 'Not set'" readonly>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">UOM</label>
+                    <input type="text" class="form-control" [value]="product.uom || 'Cases'" readonly>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Quantity</label>
+                    <input type="text" class="form-control" [value]="product.quantity != null ? product.quantity : 'Not set'" readonly>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Billbacks</label>
+                    <input type="text" class="form-control" [value]="product.billbacksAllowed === true ? 'Yes' : (product.billbacksAllowed === false ? 'No' : '—')" readonly>
+                  </div>
+                </div>
+
+                <div class="row g-2 align-items-end mt-2">
+                  <div class="col-md-3">
+                    <label class="form-label">Allowance</label>
+                    <input type="text" class="form-control" [value]="formatCurrency(product.allowance ?? null)" readonly>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Commercial DEL</label>
+                    <input type="text" class="form-control" [value]="formatCurrency(product.commercialDelPrice ?? null)" readonly>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Commercial FOB</label>
+                    <input type="text" class="form-control" [value]="formatCurrency(product.commercialFobPrice ?? null)" readonly>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Pickup Allowance (PUA)</label>
+                    <input type="text" class="form-control" [value]="formatCurrency(product.pua ?? null)" readonly>
+                  </div>
+                </div>
+
+                <div class="row g-2 align-items-end mt-2">
+                  <div class="col">
+                    <label class="form-label">Fee for Service</label>
+                    <input type="text" class="form-control" [value]="formatCurrency(product.ffsPrice ?? null)" readonly>
+                  </div>
+                  <div class="col">
+                    <label class="form-label">NOI</label>
+                    <input type="text" class="form-control" [value]="product.noiPrice === true ? 'Y' : (product.noiPrice === false ? 'N' : '—')" readonly>
+                  </div>
+                </div>
+
+                <div class="row g-2 mt-2">
+                  <div class="col-12 col-lg-6">
+                    <label class="form-label">Manufacturer Notes</label>
+                    <textarea class="form-control" rows="2" [value]="product.manufacturerNotes || '—'" readonly></textarea>
+                  </div>
+                  <div class="col-12 col-lg-6">
+                    <label class="form-label">Internal Notes</label>
+                    <textarea class="form-control" rows="2" [value]="product.internalNotes || '—'" readonly></textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pagination Controls -->
+            <div class="d-flex flex-row-reverse mt-3">
+              <ul class="pagination pagination-sm mb-0">
+                <li class="page-item" [class.disabled]="currentPage === 1">
+                  <a href="#" class="page-link" (click)="onPageChange(1); $event.preventDefault()">&lt;&lt;</a>
+                </li>
+                <li class="page-item" [class.disabled]="currentPage === 1">
+                  <a href="#" class="page-link" (click)="onPageChange(currentPage - 1); $event.preventDefault()">&lt;</a>
+                </li>
+                <li
+                  *ngFor="let page of getPageNumbers()"
+                  class="page-item"
+                  [class.active]="page === currentPage"
+                  [class.disabled]="page === -1">
+                  <a
+                    href="#"
+                    class="page-link"
+                    (click)="page !== -1 ? onPageChange(page) : null; $event.preventDefault()">
+                    {{page === -1 ? '...' : page}}
+                  </a>
+                </li>
+                <li class="page-item" [class.disabled]="currentPage === totalPages">
+                  <a href="#" class="page-link" (click)="onPageChange(currentPage + 1); $event.preventDefault()">&gt;</a>
+                </li>
+                <li class="page-item" [class.disabled]="currentPage === totalPages">
+                  <a href="#" class="page-link" (click)="onPageChange(totalPages); $event.preventDefault()">&gt;&gt;</a>
+                </li>
+              </ul>
+
+              <div class="me-5 align-self-center">
+                <span>{{ ((currentPage - 1) * pageSize) + 1 }} to {{ Math.min(currentPage * pageSize, totalProducts) }} of {{ totalProducts }}</span>
+              </div>
+
+              <div class="me-5 align-self-center">
+                <label class="form-label m-0" for="pageSize">Rows per page:</label>
+                <select
+                  class="m-0 p-0 border-top-0 border-start-0 border-end-0 border-bottom-1"
+                  [(ngModel)]="pageSize"
+                  [ngModelOptions]="{standalone: true}"
+                  (ngModelChange)="onPageSizeChange($event)"
+                  name="pageSize">
+                  <option [ngValue]="1">1</option>
+                  <option [ngValue]="5">5</option>
+                  <option [ngValue]="10">10</option>
+                  <option [ngValue]="25">25</option>
+                  <option [ngValue]="50">50</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+    </div>
+  </div>
+</main>

@@ -1,0 +1,398 @@
+<main class="container">
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb" id="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item active">Proposals</li>
+    </ol>
+  </nav>
+
+  <!-- Header -->
+  <div>
+    <h3>
+      <span>Proposals</span>
+      <span *ngIf="canModify()">
+        <a routerLink="/admin/proposals/create" class="fs-3 ms-2" title="Add new proposal">
+          <i class="fa-solid fa-plus"></i>
+        </a>
+      </span>
+    </h3>
+
+    <!-- Search and Filters -->
+    <form>
+      <div class="d-flex">
+        <input
+          type="search"
+          class="form-control flex-fill me-2"
+          [(ngModel)]="searchTerm"
+          (input)="onSearchChange($any($event.target).value || '')"
+          name="search">
+
+        <!-- Status Filter Dropdown -->
+        <label class="form-label me-2 align-self-center">Status</label>
+        <div class="me-2" style="min-width: 180px;">
+          <select class="form-select"
+                  [ngModel]="selectedStatusId"
+                  (ngModelChange)="onStatusSelectChange($event)"
+                  [ngModelOptions]="{standalone: true}">
+            <option [ngValue]="null">All</option>
+            <option *ngFor="let s of proposalStatuses" [ngValue]="s.id">{{ s.name }}</option>
+          </select>
+        </div>
+
+        <!-- Advanced Filters Toggle -->
+        <a href="#" class="fs-3 me-2" data-bs-toggle="modal" data-bs-target="#proposal-filter-modal">
+          <i class="fa-solid fa-filter"></i>
+        </a>
+
+        <!-- Actions Dropdown -->
+        <div class="dropdown">
+          <a href="#" data-bs-toggle="dropdown" aria-expanded="false" class="fs-3">
+            <i class="fa-solid fa-bars"></i>
+          </a>
+          <ul class="dropdown-menu">
+            <li>
+              <button type="button" class="dropdown-item" (click)="exportCsv()" [disabled]="loading">
+                <i class="fa-solid fa-download"></i> Export Results
+              </button>
+            </li>
+            <li>
+              <button type="button" class="dropdown-item" (click)="exportSelectedToExcel()" [disabled]="loading || selectedItems.size === 0">
+                <i class="fa-solid fa-file-export"></i> Export Selected
+              </button>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </form>
+
+    <!-- Filter Pills -->
+    <div class="d-flex flex-wrap gap-2 mt-2 align-items-center">
+      <span *ngIf="searchTerm" class="badge text-bg-denim filter-pill clickable" (click)="removeFilter('search')">
+        Search: {{searchTerm}} ✕
+      </span>
+
+      <span *ngIf="selectedStatusId != null" class="badge text-bg-denim filter-pill clickable" (click)="removeFilter('status')">
+        Status: {{ getProposalStatusName(selectedStatusId!) }} ✕
+      </span>
+
+      <span *ngIf="selectedTypeId != null" class="badge text-bg-denim filter-pill clickable" (click)="removeFilter('proposalTypeId')">
+        Type: {{ getProposalTypeName(selectedTypeId!) }} ✕
+      </span>
+
+      <span *ngIf="selectedManufacturerId != null" class="badge text-bg-denim filter-pill clickable" (click)="removeFilter('manufacturerId')">
+        Manufacturer: {{ getManufacturerName(selectedManufacturerId!) }} ✕
+      </span>
+
+      <span *ngIf="startDateFrom" class="badge text-bg-denim filter-pill clickable" (click)="removeFilter('startDateFrom')">
+        Start ≥ {{startDateFrom}} ✕
+      </span>
+      <span *ngIf="startDateTo" class="badge text-bg-denim filter-pill clickable" (click)="removeFilter('startDateTo')">
+        Start ≤ {{startDateTo}} ✕
+      </span>
+      <span *ngIf="endDateFrom" class="badge text-bg-denim filter-pill clickable" (click)="removeFilter('endDateFrom')">
+        End ≥ {{endDateFrom}} ✕
+      </span>
+      <span *ngIf="endDateTo" class="badge text-bg-denim filter-pill clickable" (click)="removeFilter('endDateTo')">
+        End ≤ {{endDateTo}} ✕
+      </span>
+      <span *ngIf="idFrom" class="badge text-bg-denim filter-pill clickable" (click)="removeFilter('idFrom')">
+        ID ≥ {{idFrom}} ✕
+      </span>
+      <span *ngIf="idTo" class="badge text-bg-denim filter-pill clickable" (click)="removeFilter('idTo')">
+        ID ≤ {{idTo}} ✕
+      </span>
+      <span *ngIf="createdDateFrom" class="badge text-bg-denim filter-pill clickable" (click)="removeFilter('createdDateFrom')">
+        Created ≥ {{createdDateFrom}} ✕
+      </span>
+      <span *ngIf="createdDateTo" class="badge text-bg-denim filter-pill clickable" (click)="removeFilter('createdDateTo')">
+        Created ≤ {{createdDateTo}} ✕
+      </span>
+
+      <span *ngIf="searchTerm || selectedStatusId != null || selectedTypeId != null || selectedManufacturerId != null || startDateFrom || startDateTo || endDateFrom || endDateTo || idFrom || idTo || createdDateFrom || createdDateTo"
+            class="badge text-bg-denim filter-pill clickable"
+            (click)="clearAllFilters()">
+        Clear All Filters
+      </span>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div *ngIf="loading" class="text-center my-4">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+
+    <!-- Error Alert -->
+    <div *ngIf="error" class="alert alert-danger mt-3">{{error}}</div>
+
+    <!-- Data Table -->
+    <div class="table-responsive mt-3" *ngIf="!loading">
+      <table class="table">
+        <thead>
+          <tr>
+            <th style="width: 36px;">
+              <input type="checkbox" [checked]="selectAll" (change)="onSelectAll()">
+            </th>
+            <th style="width: 42px;"></th>
+            <th style="cursor: pointer;" (click)="onSort('id')">
+              ID
+              <i class="fa-solid ms-1"
+                 [class.fa-sort]="sortBy !== 'id'"
+                 [class.fa-sort-up]="sortBy === 'id' && sortDirection === 'asc'"
+                 [class.fa-sort-down]="sortBy === 'id' && sortDirection === 'desc'"></i>
+            </th>
+            <th style="cursor: pointer;" (click)="onSort('title')">
+              Title
+              <i class="fa-solid ms-1"
+                 [class.fa-sort]="sortBy !== 'title'"
+                 [class.fa-sort-up]="sortBy === 'title' && sortDirection === 'asc'"
+                 [class.fa-sort-down]="sortBy === 'title' && sortDirection === 'desc'"></i>
+            </th>
+            <th>Manufacturer</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <ng-container *ngFor="let item of paginatedItems">
+            <tr>
+              <td>
+                <input type="checkbox" [checked]="isSelected(item)" (change)="onSelectItem(item)">
+              </td>
+              <td>
+                <button type="button" class="btn btn-sm btn-outline-secondary" (click)="toggleExpand(item)">
+                  <i class="fa" [ngClass]="{ 'fa-chevron-down': expandedId===item.id, 'fa-chevron-right': expandedId!==item.id }"></i>
+                </button>
+              </td>
+              <td>{{item.id}}</td>
+              <td>{{item.title}}</td>
+              <td>{{getManufacturerName(item.manufacturerId)}}</td>
+              <td>{{getProposalTypeName(item.proposalTypeId)}}</td>
+              <td>
+                <span class="badge"
+                      [class.bg-primary]="item.proposalStatusId === 1"
+                      [class.bg-warning]="item.proposalStatusId === 2"
+                      [class.bg-info]="item.proposalStatusId === 3"
+                      [class.bg-secondary]="item.proposalStatusId === 4"
+                      [class.bg-success]="item.proposalStatusId === 5">
+                  {{ item.proposalStatusName || getProposalStatusName(item.proposalStatusId) }}
+                </span>
+              </td>
+              <td>
+                <div class="d-flex justify-content-center align-items-center">
+                  <a [routerLink]="['/admin/proposals', item.id]" class="me-2 fs-6 icon" title="View Proposal">
+                    <i class="fa-solid fa-eye"></i>
+                  </a>
+
+                  <a *ngIf="canModify()"
+                    [routerLink]="canEdit(item) ? ['/admin/proposals', item.id, 'edit'] : null"
+                    class="me-2 fs-6"
+                    [ngClass]="canEdit(item) ? 'icon' : 'icon-disabled'"
+                    [style.pointer-events]="canEdit(item) ? 'auto' : 'none'"
+                    [style.cursor]="canEdit(item) ? 'pointer' : 'default'"
+                    [title]="canEdit(item) ? 'Edit Proposal' : 'Proposal is completed and cannot be edited'">
+                    <i class="fa-solid fa-pen"></i>
+                  </a>
+
+                  <a *ngIf="canModify()" [routerLink]="['/admin/proposals', item.id, 'clone']" class="fs-6 icon" title="Clone Proposal">
+                    <i class="fa-solid fa-copy"></i>
+                  </a>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="expandedId===item.id">
+              <td colspan="8" class="bg-light-subtle">
+                <div class="row g-3 py-3">
+                  <div class="col-12 col-lg-7">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                      <div>
+                        <div class="fw-semibold">Quick review</div>
+                        <div class="text-muted small">ID #{{item.id}} · {{item.title}}</div>
+                      </div>
+                      <div>
+                        <a [routerLink]="['/admin/proposals', item.id, 'awards']" class="btn btn-sm btn-outline-primary">
+                          Review & Award
+                        </a>
+                      </div>
+                    </div>
+                    <div class="text-muted small">Expand to see proposal edit history. Full product review is available on the Awards page.</div>
+                  </div>
+                  <div class="col-12 col-lg-5">
+                    <div class="card">
+                      <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">Proposal Edit History</h6>
+                        <span class="text-muted small">Latest 10</span>
+                      </div>
+                      <div class="card-body" *ngIf="(editHistoryCache[item.id] || []).length > 0; else noHist">
+                        <div class="table-responsive" style="max-height: 28vh;">
+                          <table class="table table-sm table-striped mb-0">
+                            <tbody>
+                              <tr *ngFor="let h of (editHistoryCache[item.id] | slice:0:10)">
+                                <td class="text-nowrap">{{ h.changedDate | date:'MM/dd, h:mm a' }}</td>
+                                <td class="text-nowrap"><span class="badge bg-info text-dark">{{ h.changeType }}</span></td>
+                                <td>
+
+                                  <div class="small text-muted">{{ h.productName || ('Product #' + h.productId) }}</div>
+                                  <div>{{ formatEditSummary(h) }}</div>
+
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                      <ng-template #noHist>
+                        <div class="card-body text-muted">No edits recorded yet.</div>
+                      </ng-template>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </ng-container>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="d-flex flex-row-reverse mt-3" *ngIf="!loading && paginatedItems.length > 0">
+      <ul class="pagination">
+        <li class="page-item" [class.disabled]="pagination.currentPage === 1">
+          <a href="#" class="page-link" (click)="onPageChange(1); $event.preventDefault()">&lt;&lt;</a>
+        </li>
+        <li class="page-item" [class.disabled]="pagination.currentPage === 1">
+          <a href="#" class="page-link" (click)="onPageChange(pagination.currentPage - 1); $event.preventDefault()">&lt;</a>
+        </li>
+        <li
+          *ngFor="let page of getPageNumbers()"
+          class="page-item"
+          [class.active]="page === pagination.currentPage"
+          [class.disabled]="page === -1">
+          <a
+            href="#"
+            class="page-link"
+            (click)="page !== -1 ? onPageChange(page) : null; $event.preventDefault()">
+            {{page === -1 ? '...' : page}}
+          </a>
+        </li>
+        <li class="page-item" [class.disabled]="pagination.currentPage === pagination.totalPages">
+          <a href="#" class="page-link" (click)="onPageChange(pagination.currentPage + 1); $event.preventDefault()">&gt;</a>
+        </li>
+        <li class="page-item" [class.disabled]="pagination.currentPage === pagination.totalPages">
+          <a href="#" class="page-link" (click)="onPageChange(pagination.totalPages); $event.preventDefault()">&gt;&gt;</a>
+        </li>
+      </ul>
+
+      <div class="me-5 align-self-center">
+        <span>{{pagination.startIndex + 1}} to {{Math.min(pagination.endIndex + 1, pagination.totalItems)}} of {{pagination.totalItems}}</span>
+      </div>
+
+      <div class="me-5 align-self-center">
+        <label class="form-label m-0" for="pageSize">Rows per page:</label>
+        <select
+          class="m-0 p-0 border-top-0 border-start-0 border-end-0 border-bottom-1"
+          [(ngModel)]="pagination.pageSize"
+          [ngModelOptions]="{standalone: true}"
+          (ngModelChange)="onPageSizeChange(+($event))"
+          name="pageSize">
+          <option [ngValue]="10">10</option>
+          <option [ngValue]="20">20</option>
+          <option [ngValue]="50">50</option>
+          <option [ngValue]="100">100</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!loading && paginatedItems.length === 0" class="text-center my-5">
+      <p class="text-muted">No proposals found.</p>
+      <a routerLink="/admin/proposals/create" class="btn btn-denim">
+        <i class="fa-solid fa-plus me-2"></i>Add First Proposal
+      </a>
+    </div>
+  </div>
+</main>
+
+
+<!-- Advanced Filters Modal -->
+<div class="modal fade" id="proposal-filter-modal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Advanced Filters</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
+            <label class="form-label">Proposal Type</label>
+            <select class="form-select" [(ngModel)]="advancedFilterState['proposalTypeId']" [ngModelOptions]="{standalone: true}" name="advProposalType">
+              <option [ngValue]="null">All</option>
+              <option *ngFor="let t of proposalTypes" [ngValue]="t.id">{{t.name}}</option>
+            </select>
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">Manufacturer</label>
+            <select class="form-select" [(ngModel)]="advancedFilterState['manufacturerId']" [ngModelOptions]="{standalone: true}" name="advManufacturer">
+              <option [ngValue]="null">All</option>
+              <option *ngFor="let m of manufacturers" [ngValue]="m.id">{{m.name}}</option>
+            </select>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Start Date</label>
+            <div class="row g-2">
+              <div class="col">
+                <input type="date" class="form-control" [(ngModel)]="advancedFilterState['startDateFrom']" [class.has-value]="advancedFilterState['startDateFrom']" [ngModelOptions]="{standalone: true}" name="advStartFrom" placeholder="From">
+              </div>
+              <div class="col">
+                <input type="date" class="form-control" [(ngModel)]="advancedFilterState['startDateTo']" [class.has-value]="advancedFilterState['startDateTo']" [ngModelOptions]="{standalone: true}" name="advStartTo" placeholder="To">
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">End Date</label>
+            <div class="row g-2">
+              <div class="col">
+                <input type="date" class="form-control" [(ngModel)]="advancedFilterState['endDateFrom']" [class.has-value]="advancedFilterState['endDateFrom']" [ngModelOptions]="{standalone: true}" name="advEndFrom" placeholder="From">
+              </div>
+              <div class="col">
+                <input type="date" class="form-control" [(ngModel)]="advancedFilterState['endDateTo']" [class.has-value]="advancedFilterState['endDateTo']" [ngModelOptions]="{standalone: true}" name="advEndTo" placeholder="To">
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Proposal ID</label>
+            <div class="row g-2">
+              <div class="col">
+                <input type="number" class="form-control" [(ngModel)]="advancedFilterState['idFrom']" [ngModelOptions]="{standalone: true}" name="advIdFrom" placeholder="From">
+              </div>
+              <div class="col">
+                <input type="number" class="form-control" [(ngModel)]="advancedFilterState['idTo']" [ngModelOptions]="{standalone: true}" name="advIdTo" placeholder="To">
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Created Date</label>
+            <div class="row g-2">
+              <div class="col">
+                <input type="date" class="form-control" [(ngModel)]="advancedFilterState['createdDateFrom']" [class.has-value]="advancedFilterState['createdDateFrom']" [ngModelOptions]="{standalone: true}" name="advCreatedFrom" placeholder="From">
+              </div>
+              <div class="col">
+                <input type="date" class="form-control" [(ngModel)]="advancedFilterState['createdDateTo']" [class.has-value]="advancedFilterState['createdDateTo']" [ngModelOptions]="{standalone: true}" name="advCreatedTo" placeholder="To">
+              </div>
+            </div>
+          </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" (click)="clearAdvancedFilters()" data-bs-dismiss="modal">Clear</button>
+        <button type="button" class="btn btn-denim" (click)="applyAdvancedFilters()" data-bs-dismiss="modal">Apply</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,402 @@
+    <main class="container">
+      <!-- Breadcrumb -->
+      <nav aria-label="breadcrumb" id="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a routerLink="/admin">Administration</a></li>
+          <li class="breadcrumb-item active">Customer Accounts</li>
+        </ol>
+      </nav>
+
+      <!-- Header -->
+      <div>
+        <h3>
+          <span>Customer Accounts</span>
+          <span>
+            <a routerLink="/admin/customer-accounts/create" class="fs-3 ms-2" title="Add new customer account">
+              <i class="fa-solid fa-plus"></i>
+            </a>
+          </span>
+        </h3>
+
+        <!-- Search and Filters -->
+        <form>
+          <div class="d-flex">
+            <!-- Search Input -->
+            <input
+              type="search"
+              class="form-control flex-fill me-2"
+              placeholder="Search by ID, account #, or name"
+              [(ngModel)]="searchTerm"
+              (input)="onSearchChange($any($event.target).value || '')"
+              name="search">
+
+            <!-- Status Filter Label + Dropdown -->
+            <label class="form-label me-2 align-self-center">Status</label>
+            <div class="me-2" style="min-width: 180px;">
+              <select class="form-select" [ngModel]="selectedStatus" (ngModelChange)="onStatusSelectChange($event)" [ngModelOptions]="{standalone: true}">
+                <option value="All">All</option>
+                <option value="Active">Active</option>
+                <option value="Billing">Billing</option>
+                <option value="Dummy">Dummy</option>
+                <option value="Inactive">Inactive</option>
+                <option value="Prospect">Prospect</option>
+                <option value="Rebate">Rebate</option>
+                <option value="USDA">USDA</option>
+              </select>
+            </div>
+
+            <!-- Advanced Filters Toggle -->
+            <a href="#" class="fs-3 me-2" data-bs-toggle="modal" data-bs-target="#cust-ext-filter-modal">
+              <i class="fa-solid fa-filter"></i>
+            </a>
+
+            <!-- Actions Dropdown -->
+            <div class="dropdown">
+              <a href="#" data-bs-toggle="dropdown" aria-expanded="false" class="fs-3">
+                <i class="fa-solid fa-bars"></i>
+              </a>
+              <ul class="dropdown-menu">
+                <li>
+                  <button
+                    type="button"
+                    class="dropdown-item"
+                    (click)="exportToExcel()"
+                    [disabled]="loading">
+                    <i class="fa-solid fa-download"></i> Export Results
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Filter Pills -->
+          <div class="d-flex mt-2">
+            <span
+              *ngIf="statusFilter"
+              class="badge text-bg-denim filter-pill clickable"
+              (click)="onStatusFilterChange('')">
+              Status:&nbsp;{{statusFilter | titlecase}} ✕
+            </span>
+            <span
+              *ngIf="searchTerm"
+              class="badge text-bg-denim filter-pill clickable ms-2"
+              (click)="onSearchChange('')">
+              Search: {{searchTerm}} ✕
+            </span>
+            <span
+              *ngIf="advancedFilterState['memberAccountId']"
+              class="badge text-bg-denim filter-pill clickable ms-2"
+              (click)="removeFilter('memberAccountId')">
+              Member: {{getMemberAccountNameById(advancedFilterState['memberAccountId'])}} ✕
+            </span>
+            <span
+              *ngIf="advancedFilterState['distributorId']"
+              class="badge text-bg-denim filter-pill clickable ms-2"
+              (click)="removeFilter('distributorId')">
+              Distributor: {{getDistributorNameById(advancedFilterState['distributorId'])}} ✕
+            </span>
+            <span
+              *ngIf="advancedFilterState['opCoId']"
+              class="badge text-bg-denim filter-pill clickable ms-2"
+              (click)="removeFilter('opCoId')">
+              Op-Co: {{getOpCoNameById(advancedFilterState['opCoId'])}} ✕
+            </span>
+            <span
+              *ngIf="advancedFilterState['association']"
+              class="badge text-bg-denim filter-pill clickable ms-2"
+              (click)="removeFilter('association')">
+              Association: {{getAssociationName(advancedFilterState['association'])}} ✕
+            </span>
+            <span
+              *ngIf="advancedFilterState['startDate']"
+              class="badge text-bg-denim filter-pill clickable ms-2"
+              (click)="removeFilter('startDate')">
+              Start: {{advancedFilterState['startDate']}} ✕
+            </span>
+            <span
+              *ngIf="advancedFilterState['endDate']"
+              class="badge text-bg-denim filter-pill clickable ms-2"
+              (click)="removeFilter('endDate')">
+              End: {{advancedFilterState['endDate']}} ✕
+            </span>
+            <span
+              *ngIf="advancedFilterState['state']"
+              class="badge text-bg-denim filter-pill clickable ms-2"
+              (click)="removeFilter('state')">
+              State: {{advancedFilterState['state']}} ✕
+            </span>
+            <button
+              *ngIf="advancedFilterState['memberAccountId'] || advancedFilterState['distributorId'] || advancedFilterState['opCoId'] || advancedFilterState['association'] || advancedFilterState['startDate'] || advancedFilterState['endDate'] || advancedFilterState['state']"
+              type="button"
+              class="badge text-bg-denim filter-pill clickable ms-2"
+              (click)="clearAdvancedFilters()">
+              Clear Advanced Filters
+            </button>
+            <button
+              *ngIf="statusFilter || searchTerm || advancedFilterState['memberAccountId'] || advancedFilterState['distributorId'] || advancedFilterState['opCoId'] || advancedFilterState['association'] || advancedFilterState['startDate'] || advancedFilterState['endDate'] || advancedFilterState['state']"
+              type="button"
+              class="badge text-bg-denim filter-pill clickable ms-2"
+              (click)="clearAllFilters()">
+              Clear All Filters
+            </button>
+          </div>
+
+          <!-- Advanced Filters Modal -->
+          <div class="modal fade" id="cust-ext-filter-modal">
+            <div class="modal-dialog modal-dialog-scrollable">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h1 class="modal-title fs-5 fc-denim">Additional Filters</h1>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <!-- Member Account -->
+                  <div class="mb-3">
+                    <label class="form-label">Member Account</label>
+                    <select class="form-select" [(ngModel)]="advancedFilterState['memberAccountId']" [ngModelOptions]="{standalone: true}">
+                      <option [ngValue]="''">All</option>
+                      <option *ngFor="let m of memberAccounts" [ngValue]="m.id">{{m.facilityName}}</option>
+                    </select>
+                  </div>
+
+                  <!-- Opco -->
+                  <div class="mb-3">
+                    <label class="form-label">Opco</label>
+                    <select class="form-select" [(ngModel)]="advancedFilterState['opCoId']" [ngModelOptions]="{standalone: true}">
+                      <option [ngValue]="''">All</option>
+                      <option *ngFor="let o of opcos" [ngValue]="o.id">{{o.name}}</option>
+                    </select>
+                  </div>
+
+                  <!-- Association -->
+                  <div class="mb-3">
+                    <label class="form-label">Association</label>
+                    <select class="form-select" [(ngModel)]="advancedFilterState['association']" [ngModelOptions]="{standalone: true}">
+                      <option [ngValue]="''">All</option>
+                      <option *ngFor="let a of associationOptions" [ngValue]="a.value">{{a.label}}</option>
+                    </select>
+                  </div>
+
+                  <!-- Distributor -->
+                  <div class="mb-3">
+                    <label class="form-label">Distributor</label>
+                    <select class="form-select" [(ngModel)]="advancedFilterState['distributorId']" [ngModelOptions]="{standalone: true}">
+                      <option [ngValue]="''">All</option>
+                      <option *ngFor="let d of distributors" [ngValue]="d.id">{{d.name}}</option>
+                    </select>
+                  </div>
+
+                  <!-- DSO -->
+                  <div class="mb-3">
+                    <label class="form-label">DSO</label>
+                    <input type="number" class="form-control" [(ngModel)]="advancedFilterState['dso']" [ngModelOptions]="{standalone: true}">
+                  </div>
+
+                  <!-- State -->
+                  <div class="mb-3">
+                    <label class="form-label">State</label>
+                    <input type="text" class="form-control" placeholder="e.g. TX, California" [(ngModel)]="advancedFilterState['state']" [ngModelOptions]="{standalone: true}">
+                  </div>
+
+                  <!-- Timeframe Filter -->
+                  <div class="mb-3 border-top pt-3">
+                    <h6 class="mb-3">Timeframe Filter</h6>
+
+                    <div class="mb-2">
+                      <label class="form-label">Date Field</label>
+                      <select class="form-select" [(ngModel)]="timeframeFilter.dateField" [ngModelOptions]="{standalone: true}">
+                        <option value="">Select date field</option>
+                        <option *ngFor="let field of dateFieldOptions" [value]="field.value">{{field.label}}</option>
+                      </select>
+                    </div>
+
+                    <div class="mb-2" *ngIf="timeframeFilter.dateField">
+                      <label class="form-label">Operator</label>
+                      <select class="form-select" [(ngModel)]="timeframeFilter.operator" [ngModelOptions]="{standalone: true}">
+                        <option value="">Select operator</option>
+                        <option *ngFor="let op of operatorOptions" [value]="op.value">{{op.label}}</option>
+                      </select>
+                    </div>
+
+                    <div class="mb-2" *ngIf="timeframeFilter.operator">
+                      <label class="form-label">Date</label>
+                      <input type="date" class="form-control" [(ngModel)]="timeframeFilter.date1" [ngModelOptions]="{standalone: true}">
+                    </div>
+
+                    <div class="mb-2" *ngIf="timeframeFilter.operator === 'between'">
+                      <label class="form-label">End Date (for Between)</label>
+                      <input type="date" class="form-control" [(ngModel)]="timeframeFilter.date2" [ngModelOptions]="{standalone: true}">
+                    </div>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-denim" data-bs-dismiss="modal">Close</button>
+                  <button type="button" class="btn btn-denim" (click)="applyAdvancedFilters()" data-bs-dismiss="modal">Apply Filters</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+
+        <!-- Loading Indicator -->
+        <div *ngIf="loading" class="text-center my-4">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+
+        <!-- Error Message -->
+        <div *ngIf="error" class="alert alert-danger mt-3">
+          {{error}}
+        </div>
+
+        <!-- Data Table -->
+        <div class="table-responsive mt-3" *ngIf="!loading">
+          <table class="table">
+            <thead>
+              <tr>
+                <th style="cursor: pointer;" (click)="onSort('id')">
+                  ID
+                  <i class="fa-solid ms-1"
+                     [class.fa-sort]="sortBy !== 'id'"
+                     [class.fa-sort-up]="sortBy === 'id' && sortDirection === 'asc'"
+                     [class.fa-sort-down]="sortBy === 'id' && sortDirection === 'desc'"></i>
+                </th>
+                <th style="cursor: pointer;" (click)="onSort('customerAccountNumber')">
+                  Account #
+                  <i class="fa-solid ms-1"
+                     [class.fa-sort]="sortBy !== 'customerAccountNumber'"
+                     [class.fa-sort-up]="sortBy === 'customerAccountNumber' && sortDirection === 'asc'"
+                     [class.fa-sort-down]="sortBy === 'customerAccountNumber' && sortDirection === 'desc'"></i>
+                </th>
+                <th style="cursor: pointer;" (click)="onSort('customerName')">
+                  Account Name
+                  <i class="fa-solid ms-1"
+                     [class.fa-sort]="sortBy !== 'customerName'"
+                     [class.fa-sort-up]="sortBy === 'customerName' && sortDirection === 'asc'"
+                     [class.fa-sort-down]="sortBy === 'customerName' && sortDirection === 'desc'"></i>
+                </th>
+                <th style="cursor: pointer;" (click)="onSort('distributorName')">
+                  Distributor
+                  <i class="fa-solid ms-1" [ngClass]="getSortIcon('distributorName')"></i>
+                </th>
+                <th style="cursor: pointer;" (click)="onSort('opCoName')">
+                  Op-Co
+                  <i class="fa-solid ms-1" [ngClass]="getSortIcon('opCoName')"></i>
+                </th>
+                <th style="cursor: pointer;" (click)="onSort('city')">
+                  City
+                  <i class="fa-solid ms-1" [ngClass]="getSortIcon('city')"></i>
+                </th>
+                <th style="cursor: pointer;" (click)="onSort('startDate')">
+                  Start Date
+                  <i class="fa-solid ms-1" [ngClass]="getSortIcon('startDate')"></i>
+                </th>
+                <th class="text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of paginatedItems">
+                <td>{{item.id}}</td>
+                <td>{{item.customerAccountNumber || '-'}}</td>
+                <td>{{item.customerName || '-'}}</td>
+                <td>{{item.distributorName || '-'}}</td>
+                <td>{{item.opCoName || '-'}}</td>
+                <td>{{item.city || '-'}}</td>
+                <td>{{item.startDate ? (item.startDate | date:'MM/dd/yyyy') : '-'}}</td>
+                <td>
+                  <div class="d-flex justify-content-center">
+                    <a [routerLink]="['/admin/customer-accounts/view', item.id]" class="me-2 fs-6 icon" title="View customer account">
+                      <i class="fa-solid fa-eye"></i>
+                    </a>
+                    <a href="#" class="fs-6 icon text-danger" (click)="openDeleteModal(item); $event.preventDefault()">
+                      <i class="fa-solid fa-trash-can"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="d-flex flex-row-reverse mt-3" *ngIf="!loading && paginatedItems.length > 0">
+          <ul class="pagination">
+            <li class="page-item" [class.disabled]="pagination.currentPage === 1">
+              <a href="#" class="page-link" (click)="onPageChange(1); $event.preventDefault()">&lt;&lt;</a>
+            </li>
+            <li class="page-item" [class.disabled]="pagination.currentPage === 1">
+              <a href="#" class="page-link" (click)="onPageChange(pagination.currentPage - 1); $event.preventDefault()">&lt;</a>
+            </li>
+            <li 
+              *ngFor="let page of getPageNumbers()" 
+              class="page-item"
+              [class.active]="page === pagination.currentPage"
+              [class.disabled]="page === -1">
+              <a 
+                href="#" 
+                class="page-link"
+                (click)="page !== -1 ? onPageChange(page) : null; $event.preventDefault()">
+                {{page === -1 ? '...' : page}}
+              </a>
+            </li>
+            <li class="page-item" [class.disabled]="pagination.currentPage === pagination.totalPages">
+              <a href="#" class="page-link" (click)="onPageChange(pagination.currentPage + 1); $event.preventDefault()">&gt;</a>
+            </li>
+            <li class="page-item" [class.disabled]="pagination.currentPage === pagination.totalPages">
+              <a href="#" class="page-link" (click)="onPageChange(pagination.totalPages); $event.preventDefault()">&gt;&gt;</a>
+            </li>
+          </ul>
+
+          <div class="me-5 align-self-center">
+            <span>{{pagination.startIndex + 1}} to {{Math.min(pagination.endIndex + 1, pagination.totalItems)}} of {{pagination.totalItems}}</span>
+          </div>
+
+          <div class="me-5 align-self-center">
+            <label class="form-label m-0" for="pageSize">Rows per page:</label>
+            <select
+              class="m-0 p-0 border-top-0 border-start-0 border-end-0 border-bottom-1"
+              [(ngModel)]="pagination.pageSize"
+              [ngModelOptions]="{standalone: true}"
+              (ngModelChange)="onPageSizeChange(+($event))"
+              name="pageSize">
+              <option [ngValue]="1">1</option>
+              <option [ngValue]="2">2</option>
+              <option [ngValue]="5">5</option>
+              <option [ngValue]="10">10</option>
+              <option [ngValue]="20">20</option>
+              <option [ngValue]="50">50</option>
+              <option [ngValue]="100">100</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- No Data Message -->
+        <div *ngIf="!loading && paginatedItems.length === 0" class="text-center my-5">
+          <p class="text-muted">No customer accounts found.</p>
+          <a routerLink="/admin/customer-accounts/create" class="btn btn-denim">
+            <i class="fa-solid fa-plus me-2"></i>Add First Customer Account
+          </a>
+        </div>
+      </div>
+      <!-- Delete Confirmation Modal -->
+      <div *ngIf="showDeleteModal" class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Confirm Deletion</h5>
+              <button type="button" class="btn-close" aria-label="Close" (click)="closeDeleteModal()"></button>
+            </div>
+            <div class="modal-body">
+              <p>Are you sure you want to delete?</p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-denim" (click)="closeDeleteModal()">Cancel</button>
+              <button type="button" class="btn btn-denim" (click)="confirmDelete()">Delete</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Backdrop -->
+      <div *ngIf="showDeleteModal" class="modal-backdrop fade show"></div>
+    </main>
