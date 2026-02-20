@@ -1,0 +1,233 @@
+<!-- Product Search Modal -->
+@if (visible) {
+  <div class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+      <div class="modal-content">
+        <!-- Header -->
+        <div class="modal-header bg-denim text-white">
+          <h5 class="modal-title">{{ title }}</h5>
+          <button type="button" class="btn-close btn-close-white" (click)="onClose()"></button>
+        </div>
+
+        <!-- Body -->
+        <div class="modal-body">
+          <!-- Search + Status Filters -->
+          <div class="d-flex mb-3">
+            <input
+              type="search"
+              class="form-control flex-fill me-2"
+              placeholder="Search by ID, name, or product code..."
+              [ngModel]="searchTerm"
+              (input)="onSearchInput($any($event.target).value || '')"
+              name="modalSearch">
+
+            <div class="btn-group me-2" role="group">
+              <button
+                type="button"
+                class="btn status-filter-btn"
+                [class.active]="selectedStatus === 'Active'"
+                (click)="onStatusFilter('Active')">
+                Active
+              </button>
+              <button
+                type="button"
+                class="btn status-filter-btn"
+                [class.active]="selectedStatus === 'Inactive'"
+                (click)="onStatusFilter('Inactive')">
+                Inactive
+              </button>
+            </div>
+
+            <a href="#" class="fs-4 align-self-center" (click)="toggleAdvancedFilters(); $event.preventDefault()" title="Advanced Filters">
+              <i class="fa-solid fa-filter"></i>
+            </a>
+          </div>
+
+          <!-- Filter Pills -->
+          <div class="d-flex flex-wrap mb-2" *ngIf="hasActiveFilters">
+            <span *ngIf="selectedStatus" class="badge text-bg-denim filter-pill clickable me-2 mb-1" (click)="removeStatusFilter()">
+              Status: {{ selectedStatus }} ✕
+            </span>
+            <span *ngIf="searchTerm" class="badge text-bg-denim filter-pill clickable me-2 mb-1" (click)="removeSearchFilter()">
+              Search: {{ searchTerm }} ✕
+            </span>
+            <span *ngIf="selectedManufacturerId" class="badge text-bg-denim filter-pill clickable me-2 mb-1" (click)="removeManufacturerFilter()">
+              Manufacturer: {{ getManufacturerName(selectedManufacturerId) }} ✕
+            </span>
+            <span *ngIf="selectedBrand" class="badge text-bg-denim filter-pill clickable me-2 mb-1" (click)="removeBrandFilter()">
+              Brand: {{ selectedBrand }} ✕
+            </span>
+            <button type="button" class="badge text-bg-denim filter-pill clickable me-2 mb-1" (click)="clearAllFilters()">
+              Clear All ✕
+            </button>
+          </div>
+
+          <!-- Advanced Filters (inline collapsible) -->
+          @if (showAdvancedFilters) {
+            <div class="card mb-3">
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-6 mb-2">
+                    <label class="form-label">Manufacturer</label>
+                    <select class="form-select" [(ngModel)]="selectedManufacturerId" name="modalManufacturer">
+                      <option [ngValue]="null">All Manufacturers</option>
+                      <option *ngFor="let m of manufacturers" [ngValue]="m.id">{{ m.name }}</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6 mb-2">
+                    <label class="form-label">Brand</label>
+                    <select class="form-select" [(ngModel)]="selectedBrand" name="modalBrand">
+                      <option [ngValue]="null">All Brands</option>
+                      <option *ngFor="let b of brands" [ngValue]="b">{{ b }}</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="d-flex justify-content-end gap-2">
+                  <button type="button" class="btn btn-sm btn-outline-secondary" (click)="clearAdvancedFilters()">Clear</button>
+                  <button type="button" class="btn btn-sm btn-denim" (click)="applyAdvancedFilters()">Apply</button>
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- Loading -->
+          <div *ngIf="loading" class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+
+          <!-- Error -->
+          <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+
+          <!-- Table -->
+          <div class="table-responsive" *ngIf="!loading">
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th *ngIf="selectionMode === 'multi'" class="text-center" style="width: 40px;">
+                    <input type="checkbox" class="form-check-input" [checked]="selectAll" (change)="toggleSelectAll()">
+                  </th>
+                  <th class="sortable-header" (click)="onSort('id')">
+                    ID <i class="fa-solid ms-1" [ngClass]="getSortIcon('id')"></i>
+                  </th>
+                  <th class="sortable-header" (click)="onSort('manufacturerProductCode')">
+                    MFR Code <i class="fa-solid ms-1" [ngClass]="getSortIcon('manufacturerProductCode')"></i>
+                  </th>
+                  <th class="sortable-header" (click)="onSort('brand')">
+                    Brand <i class="fa-solid ms-1" [ngClass]="getSortIcon('brand')"></i>
+                  </th>
+                  <th class="sortable-header" (click)="onSort('name')">
+                    Name <i class="fa-solid ms-1" [ngClass]="getSortIcon('name')"></i>
+                  </th>
+                  <th>Pack Size</th>
+                  <th class="sortable-header" (click)="onSort('manufacturerName')">
+                    Manufacturer <i class="fa-solid ms-1" [ngClass]="getSortIcon('manufacturerName')"></i>
+                  </th>
+                  <th class="sortable-header" (click)="onSort('status')">
+                    Status <i class="fa-solid ms-1" [ngClass]="getSortIcon('status')"></i>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (product of products; track product.id) {
+                  <tr
+                    [class.table-active]="isSelected(product)"
+                    [class.cursor-pointer]="selectionMode === 'single'"
+                    (click)="onRowClick(product)">
+                    <td *ngIf="selectionMode === 'multi'" class="text-center" (click)="$event.stopPropagation()">
+                      <input
+                        type="checkbox"
+                        class="form-check-input"
+                        [checked]="isSelected(product)"
+                        (change)="toggleItemSelection(product)">
+                    </td>
+                    <td>{{ product.id }}</td>
+                    <td>{{ product.manufacturerProductCode || '-' }}</td>
+                    <td>{{ product.brand || '-' }}</td>
+                    <td>{{ product.name || product.description || '-' }}</td>
+                    <td>{{ product.packSize || '-' }}</td>
+                    <td>{{ product.manufacturerName || '-' }}</td>
+                    <td>
+                      <span class="badge" [ngClass]="'bg-' + getStatusColor(product.status)">
+                        {{ product.status }}
+                      </span>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td [attr.colspan]="selectionMode === 'multi' ? 9 : 8" class="text-center text-muted py-4">
+                      No products found.
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <div class="d-flex flex-wrap align-items-center justify-content-between mt-3" *ngIf="!loading && products.length > 0">
+            <div class="text-muted small">
+              {{ startIndex + 1 }} to {{ Math.min(endIndex, totalItems) }} of {{ totalItems }}
+            </div>
+
+            <div class="d-flex align-items-center">
+              <label class="form-label m-0 me-1 small">Rows:</label>
+              <select
+                class="form-select form-select-sm d-inline-block me-3"
+                style="width: auto;"
+                [(ngModel)]="pageSize"
+                [ngModelOptions]="{standalone: true}"
+                (ngModelChange)="onPageSizeChange(+$event)"
+                name="modalPageSize">
+                <option [ngValue]="10">10</option>
+                <option [ngValue]="20">20</option>
+                <option [ngValue]="50">50</option>
+                <option [ngValue]="100">100</option>
+              </select>
+
+              <ul class="pagination pagination-sm mb-0">
+                <li class="page-item" [class.disabled]="currentPage === 1">
+                  <a href="#" class="page-link" (click)="onPageChange(1); $event.preventDefault()">&laquo;</a>
+                </li>
+                <li class="page-item" [class.disabled]="currentPage === 1">
+                  <a href="#" class="page-link" (click)="onPageChange(currentPage - 1); $event.preventDefault()">&lsaquo;</a>
+                </li>
+                <li
+                  *ngFor="let page of getPageNumbers()"
+                  class="page-item"
+                  [class.active]="page === currentPage"
+                  [class.disabled]="page === -1">
+                  <a href="#" class="page-link" (click)="page !== -1 ? onPageChange(page) : null; $event.preventDefault()">
+                    {{ page === -1 ? '...' : page }}
+                  </a>
+                </li>
+                <li class="page-item" [class.disabled]="currentPage === totalPages">
+                  <a href="#" class="page-link" (click)="onPageChange(currentPage + 1); $event.preventDefault()">&rsaquo;</a>
+                </li>
+                <li class="page-item" [class.disabled]="currentPage === totalPages">
+                  <a href="#" class="page-link" (click)="onPageChange(totalPages); $event.preventDefault()">&raquo;</a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="modal-footer">
+          @if (selectionMode === 'multi') {
+            <span class="me-auto text-muted small">{{ selectedItems.size }} product(s) selected</span>
+            <button type="button" class="btn btn-secondary" (click)="onClose()">Cancel</button>
+            <button type="button" class="btn btn-denim" [disabled]="selectedItems.size === 0" (click)="confirmMultiSelect()">
+              Confirm Selection
+            </button>
+          } @else {
+            <span class="me-auto text-muted small">Click a row to select</span>
+            <button type="button" class="btn btn-secondary" (click)="onClose()">Cancel</button>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade show"></div>
+}

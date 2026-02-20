@@ -1,0 +1,519 @@
+/* NPP Contract Management Theme */
+
+/* CSS Variables for NPP Branding */
+:root {
+  --npp-primary: #2c5aa0;
+  --npp-primary-dark: #1e3f73;
+  --npp-primary-light: #4a7bc8;
+  --npp-secondary: #6c757d;
+  --npp-success: #198754;
+  --npp-danger: #dc3545;
+  --npp-warning: #ffc107;
+  --npp-info: #0dcaf0;
+  --npp-light: #f8f9fa;
+  --npp-dark: #212529;
+  --npp-white: #ffffff;
+  --npp-gray-100: #f8f9fa;
+  --npp-gray-200: #e9ecef;
+  --npp-gray-300: #dee2e6;
+  --npp-gray-400: #ced4da;
+  --npp-gray-500: #adb5bd;
+  --npp-gray-600: #6c757d;
+  --npp-gray-700: #495057;
+  --npp-gray-800: #343a40;
+  --npp-gray-900: #212529;
+}
+
+/* NPP Denim Color Classes */
+.btn-denim {
+  background-color: var(--npp-primary);
+  border-color: var(--npp-primary);
+  color: var(--npp-white);
+}
+
+.btn-denim:hover,
+.btn-denim:focus {
+  background-color: var(--npp-primary-dark);
+  border-color: var(--npp-primary-dark);
+  color: var(--npp-white);
+}
+
+.btn-denim:active,
+.btn-denim.active {
+  background-color: var(--npp-primary-dark);
+  border-color: var(--npp-primary-dark);
+  color: var(--npp-white);
+}
+
+.btn-denim:disabled {
+  background-color: var(--npp-gray-400);
+  border-color: var(--npp-gray-400);
+  color: var(--npp-white);
+}
+
+.text-bg-denim {
+  background-color: var(--denim-color) !important;
+  color: var(--npp-white) !important;
+}
+
+.fc-denim {
+  color: var(--denim-color) !important;
+}
+
+.bg-denim {
+  background-color: var(--denim-color) !important;
+}
+
+.border-denim {
+  border-color: var(--denim-color) !important;
+}
+
+/* Table Styling */
+.table-denim {
+  --bs-table-bg: var(--npp-white);
+  --bs-table-striped-bg: var(--npp-gray-100);
+  --bs-table-hover-bg: var(--npp-gray-100);
+  --bs-table-border-color: var(--npp-gray-300);
+}
+
+.table-denim thead th {
+  background-color: #4a5568 !important; /* Darker blue-gray to match template */
+  color: var(--npp-white) !important;
+  border-color: #2d3748 !important;
+  font-weight: 600;
+  font-size: 0.875rem;
+  letter-spacing: 0.5px;
+  /* Remove text-transform: uppercase to allow normal case */
+}
+
+.table-denim tbody tr:hover {
+  background-color: var(--npp-gray-100);
+}
+
+/* Header Styling */
+header {
+  background-color: var(--npp-white);
+  border-bottom: 2px solid var(--npp-primary);
+  padding: 1rem 0;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* When the header is fixed, do not reserve extra flow space below it */
+header.fixed-top { margin-bottom: 0 !important; }
+
+
+header img {
+  height: 40px;
+  width: auto;
+}
+
+header a {
+  color: var(--npp-dark);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+header a:hover {
+  color: var(--denim-color) !important;
+  text-decoration: underline !important;
+  background: transparent !important;
+}
+
+/* Ensure dropdown toggles in header also underline on hover/focus */
+header a.dropdown-toggle:hover,
+header a.dropdown-toggle:focus {
+  color: var(--denim-color) !important;
+  text-decoration: underline !important;
+  background: transparent !important;
+}
+
+header .dropdown-toggle::after {
+  content: "▼";
+  border: none;
+  font-size: 0.75rem;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}
+
+/* Breadcrumb Styling */
+.breadcrumb {
+  background-color: transparent;
+  padding: 0;
+  margin-bottom: 1.5rem;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+  content: "/";
+  color: var(--npp-gray-500);
+}
+
+.breadcrumb-item a {
+  color: var(--denim-color) !important;
+  text-decoration: none;
+}
+
+.breadcrumb-item a:hover {
+  color: var(--denim-color) !important;
+  text-decoration: underline;
+}
+
+.breadcrumb-item.active {
+  color: var(--npp-gray-600);
+}
+
+/* Form Styling */
+.form-control:focus {
+  border-color: var(--npp-primary);
+  box-shadow: 0 0 0 0.2rem rgba(44, 90, 160, 0.25);
+}
+
+.form-select:focus {
+  border-color: var(--npp-primary);
+  box-shadow: 0 0 0 0.2rem rgba(44, 90, 160, 0.25);
+}
+
+.form-check-input:checked {
+  background-color: var(--npp-primary);
+  border-color: var(--npp-primary);
+}
+
+.form-check-input:focus {
+  border-color: var(--npp-primary);
+  box-shadow: 0 0 0 0.2rem rgba(44, 90, 160, 0.25);
+}
+
+/* Badge Styling */
+.badge.rounded-pill.clickable {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.badge.rounded-pill.clickable:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* Icon Styling */
+.icon {
+  color: var(--npp-gray-600);
+  transition: color 0.3s ease;
+}
+
+.icon:hover {
+  color: var(--denim-color);
+  text-decoration: underline;
+}
+
+.icon.text-danger { /* Delete icon default per template */
+  color: #64748b !important; /* slate-500 neutral */
+}
+.icon.text-danger:hover {
+  color: #2563eb !important; /* blue-600 on hover */
+}
+
+/* Pagination Styling */
+.pagination .page-link {
+  color: #64748b;
+  border-color: #e2e8f0;
+  background-color: white;
+}
+
+.pagination .page-link:hover {
+  text-decoration: underline;
+  color: var(--denim-color) !important;
+  background-color: transparent !important;
+  border-color: inherit !important;
+}
+
+.pagination .page-item.active .page-link {
+  background-color: #3b82f6 !important; /* Brighter blue to match template */
+  border-color: #3b82f6 !important;
+  color: white !important;
+}
+
+.pagination .page-item.disabled .page-link {
+  color: #cbd5e1;
+  background-color: white;
+  border-color: #e2e8f0;
+}
+
+.pagination .page-item.disabled .page-link:hover {
+  color: #cbd5e1 !important;
+  background-color: white !important;
+  border-color: #e2e8f0 !important;
+}
+
+/* Icon Styling */
+.icon {
+  color: #64748b;
+  transition: color 0.3s ease;
+}
+
+.icon:hover {
+  color: var(--denim-color);
+  text-decoration: underline;
+}
+
+.icon.text-danger:hover {
+  color: #2563eb !important; /* blue-600 on hover */
+}
+
+/* Loading Spinner */
+.spinner-border-primary {
+  color: var(--npp-primary);
+}
+
+/* Alert Styling */
+.alert-primary {
+  background-color: rgba(44, 90, 160, 0.1);
+  border-color: var(--npp-primary);
+  color: var(--npp-primary-dark);
+}
+
+/* Card Styling */
+.card {
+  border: 1px solid var(--npp-gray-300);
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.card-header {
+  background-color: var(--npp-gray-100);
+  border-bottom: 1px solid var(--npp-gray-300);
+  font-weight: 600;
+}
+
+/* Modal Styling */
+.modal-header {
+  background-color: var(--npp-gray-100);
+  border-bottom: 1px solid var(--npp-gray-300);
+}
+
+.modal-title.fc-denim {
+  color: var(--denim-color) !important;
+  font-weight: 600;
+}
+
+/* Dropdown Styling */
+.dropdown-menu {
+  border: 1px solid var(--npp-gray-300);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+  background-color: transparent !important;
+  color: var(--denim-color) !important;
+  text-decoration: underline;
+}
+
+.dropdown-item.active {
+  background-color: var(--npp-primary);
+  color: var(--npp-white);
+}
+
+/* Status Badge Colors - Match Template */
+.badge.bg-success {
+  background-color: #10b981 !important; /* Green for Active */
+  color: white !important;
+}
+
+.badge.bg-warning {
+  background-color: #f59e0b !important; /* Yellow/Orange for Inactive */
+  color: white !important;
+}
+
+.badge.bg-secondary {
+  background-color: #6b7280 !important; /* Gray for Suspended/Pending */
+  color: white !important;
+}
+
+.badge.bg-danger {
+  background-color: var(--npp-danger) !important;
+}
+
+.badge.bg-info {
+  background-color: var(--npp-info) !important;
+  color: var(--npp-dark) !important;
+}
+
+/* Make dark text visible on warning badges when explicitly requested */
+.badge.bg-warning.text-dark {
+  color: var(--npp-dark) !important;
+}
+
+
+/* Utility Classes */
+.min {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.text-truncate-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.text-truncate-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  header {
+    padding: 0.5rem 0;
+  }
+
+  header img {
+    height: 32px;
+  }
+
+  .table-responsive {
+    font-size: 0.875rem;
+  }
+
+  .btn {
+    font-size: 0.875rem;
+    padding: 0.375rem 0.75rem;
+  }
+}
+
+/* Animation Classes */
+.fade-in {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from { transform: translateY(-10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Focus Styles for Accessibility */
+.btn:focus,
+.form-control:focus,
+.form-select:focus,
+.form-check-input:focus {
+  outline: 2px solid var(--npp-primary);
+  outline-offset: 2px;
+}
+
+/* Filter Pills and Buttons */
+/* Make filter pills visually match plain Bootstrap badges; color comes from badge classes */
+.filter-pill {
+  /* Listing pages render these inside a `.d-flex` container.
+     Flex defaults (`align-items: stretch`) can make pills equal height, but leave
+     the text visually off-center. Make each pill a tiny flex container so its
+     contents stay vertically centered consistently (span + button). */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* Also prevent the pill itself from being stretched taller than its content */
+  align-self: center;
+  line-height: 1;
+
+  margin-right: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Buttons styled as badges should look/align like the span pills */
+button.filter-pill {
+  border: 0;
+}
+
+.filter-pill .btn-close {
+  filter: invert(1);
+  font-size: 0.75rem;
+  margin-left: 0.5rem;
+}
+
+.clear-filters-btn {
+  background-color: #6b7280 !important; /* Gray for clear all button */
+  color: white !important;
+  border: none !important;
+  font-size: 0.875rem;
+  padding: 0.375rem 0.75rem;
+  margin-bottom: 0.5rem;
+  border-radius: 0.375rem;
+}
+
+.clear-filters-btn:hover {
+  background-color: #4b5563 !important;
+}
+
+/* Status Filter Buttons */
+.status-filter-btn {
+  background-color: var(--denim-color) !important;
+  color: #ffffff !important;
+  border: 1px solid var(--denim-color) !important;
+  font-size: 0.875rem;
+  padding: 0.5rem 1rem;
+  margin-right: 0; /* no gap between buttons */
+  border-radius: 0.375rem;
+  font-weight: 500;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+/* ensure no spacing inside a btn-group */
+.btn-group .status-filter-btn { margin-right: 0; }
+.btn-group .status-filter-btn + .status-filter-btn { margin-left: 0; }
+
+.status-filter-btn.active {
+  background-color: var(--blue-color) !important;
+  color: #ffffff !important;
+  border-color: var(--blue-color) !important;
+}
+
+.status-filter-btn:hover,
+.status-filter-btn.active:hover {
+  background-color: var(--blue-color) !important; /* rgb(87, 168, 204) */
+  border-color: var(--blue-color) !important;
+}
+
+/* Print Styles */
+@media print {
+  header,
+  .btn,
+  .pagination,
+  .dropdown {
+    display: none !important;
+  }
+
+  .table {
+    font-size: 12px;
+  }
+
+  .container {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+}
+
+
+/* Ensure status filter hover uses template blue regardless of Bootstrap specificity */
+.btn.status-filter-btn:hover,
+.btn-group .btn.status-filter-btn:hover,
+.btn.status-filter-btn.active:hover {
+  background-color: var(--blue-color) !important;
+  border-color: var(--blue-color) !important;
+  color: #ffffff !important;
+}

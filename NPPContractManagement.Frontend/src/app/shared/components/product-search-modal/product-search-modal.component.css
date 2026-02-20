@@ -1,0 +1,42 @@
+.bg-denim {
+  background-color: var(--denim-color);
+}
+
+.sortable-header {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.sortable-header:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.cursor-pointer:hover {
+  background-color: rgba(0, 45, 64, 0.06) !important;
+}
+
+.filter-pill {
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.table-responsive {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.table thead th {
+  position: sticky;
+  top: 0;
+  background-color: #fff;
+  z-index: 1;
+}

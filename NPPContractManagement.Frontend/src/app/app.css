@@ -1,0 +1,9 @@
+/* Offset the app content for the fixed header so page tops are not hidden */
+:host { display: block; }
+.app-content { padding-top: 0; }
+.app-content.has-header { padding-top: 75px; }
+
+/* Slightly smaller header on narrower screens; adjust offset accordingly */
+@media (max-width: 992px) {
+  .app-content.has-header { padding-top: 75px; }
+}
